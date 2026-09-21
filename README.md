@@ -169,33 +169,34 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080
 
 ---
 
-[## 👨‍💻 Autores
+## 👨‍💻 Autores
 
 Projeto desenvolvido com 💜 por estudantes do IFSP.
 
 <table align="center">
   <tr>
-<td align="center" width="200px">
+    <td align="center" width="200px">
       <img src="https://avatars.githubusercontent.com/u/155771396?v=4" width="100" height="100" style="border-radius:50%; object-fit:cover;"/><br>
       <b>Geisiele Oliveira</b><br>
       <a href="https://github.com/GeisieleOliveira" target="_blank">
         <img src="https://img.shields.io/badge/GitHub-GeisieleOliveira-black?style=for-the-badge&logo=github"/>
       </a>
-    </td>    
+    </td>
     <td align="center" width="200px">
-      <img src="https://avatars.githubusercontent.com/u/164098429?v=4" width="100" height="100" style="border-radius:50%; object-fit:cover;"/><br>
+      <img src="https://avatars.githubusercontent.com/juayumi" width="100" height="100" style="border-radius:50%; object-fit:cover;"/><br>
       <b>Juliana Ayumi</b><br>
-      <a href="https:https://github.com/juayumi" target="_blank">
-        <img src="https://img.shields.io/badge/GitHub-GeisieleOliveira-black?style=for-the-badge&logo=github"/>
+      <a href="https://github.com/juayumi" target="_blank">
+        <img src="https://img.shields.io/badge/GitHub-juayumi-black?style=for-the-badge&logo=github"/>
       </a>
-    </td>   
-     <td align="center" width="200px">
+    </td>
+    <td align="center" width="200px">
       <img src="https://avatars.githubusercontent.com/Thiagolvc" width="100" height="100" style="border-radius:50%; object-fit:cover;"/><br>
       <b>Thiago Oliveira</b><br>
       <a href="https://github.com/Thiagolvc" target="_blank">
+        <img src="https://img.shields.io/badge/GitHub-Thiagolvc-black?style=for-the-badge&logo=github"/>
       </a>
     </td>
-   <td align="center" width="200px">
+    <td align="center" width="200px">
       <img src="https://avatars.githubusercontent.com/Viniciusmagal" width="100" height="100" style="border-radius:50%; object-fit:cover;"/><br>
       <b>Vinicius Magalhães</b><br>
       <a href="https://github.com/Viniciusmagal" target="_blank">
