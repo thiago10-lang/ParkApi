@@ -185,7 +185,7 @@ Projeto desenvolvido com 💜 por estudantes do IFSP.
     <td align="center" width="200px">
       <img src="https://avatars.githubusercontent.com/u/164098429?v=4" width="100" height="100" style="border-radius:50%; object-fit:cover;"/><br>
       <b>Juliana Ayumi</b><br>
-      <a href="https://github.com/GeisieleOliveira" target="_blank">
+      <a href="https:https://github.com/juayumi" target="_blank">
         <img src="https://img.shields.io/badge/GitHub-GeisieleOliveira-black?style=for-the-badge&logo=github"/>
       </a>
     </td>   
