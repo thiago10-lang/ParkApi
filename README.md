@@ -2,14 +2,14 @@
 
 # 🅿️ ParkingAPI
 
-**Sistema de gerenciamento de estacionamento com API REST e aplicativo mobile.**
+**Sistema de gerenciamento de estacionamento com API REST, aplicativo Flutter, solicitação de vagas com QR Code e painel administrativo.**
 
 ![Java](https://img.shields.io/badge/Backend-Java%2017-orange?style=for-the-badge&logo=openjdk)
 ![Spring Boot](https://img.shields.io/badge/Framework-Spring%20Boot-6DB33F?style=for-the-badge&logo=springboot)
-![MySQL](https://img.shields.io/badge/Database-MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
-![Flutter](https://img.shields.io/badge/Mobile-Flutter-02569B?style=for-the-badge&logo=flutter)
+![H2](https://img.shields.io/badge/Database-H2-1021FF?style=for-the-badge)
+![Flutter](https://img.shields.io/badge/App-Flutter-02569B?style=for-the-badge&logo=flutter)
 
-[Sobre](#-sobre) • [Funcionalidades](#-funcionalidades) • [Tecnologias](#-tecnologias-utilizadas) • [Instalação](#-instalação-e-execução) • [Autores](#-autores)
+[Sobre](#-sobre) • [Funcionalidades](#-funcionalidades) • [Tecnologias](#-tecnologias-utilizadas) • [Como rodar](#-como-rodar-em-qualquer-máquina) • [Deploy](#-deploy) • [Endpoints](#-principais-endpoints) • [Autores](#-autores)
 
 </div>
 
@@ -19,137 +19,220 @@
 
 O **ParkingAPI** é um sistema de gerenciamento de estacionamento desenvolvido como parte do Projeto Semestral do curso de Análise e Desenvolvimento de Sistemas — IFSP.
 
-A aplicação possui uma API REST criada em Spring Boot e um aplicativo mobile desenvolvido em Flutter. O sistema permite controlar usuários, clientes, vagas, entrada e saída de veículos, histórico de estacionamentos e relatórios em PDF.
+O motorista chega ao estacionamento, solicita a vaga pelo aplicativo e recebe um **QR Code** com os dados do ticket. Na saída, o atendente lê o QR Code, o sistema calcula o valor e libera a vaga. O administrador acompanha tudo por um painel com indicadores em tempo real.
 
 ---
 
 ## 🚀 Funcionalidades
 
-### 👤 Cliente
+### 🚗 Motorista (perfil CLIENTE)
 
-- Login com autenticação JWT
-- Consulta dos próprios registros de estacionamento
-- Consulta de veículo pelo número do recibo
-- Visualização do histórico de entradas e saídas
-- Geração de relatório em PDF
+- Cadastro e login com autenticação JWT
+- Solicitação de vaga com formulário curto: nome e CPF apenas na primeira vez, depois somente placa, marca, modelo e cor
+- Alocação automática de uma vaga livre
+- **QR Code** do ticket com recibo, vaga, placa, nome, CPF mascarado e horário de entrada
+- Aba **Minha vaga** com ticket, permanência e valor estimado atualizado em tempo real
+- Aba **Histórico** com todas as visitas, total pago e relatório em PDF
+- Aceita placas no padrão antigo (`ABC-1234`) e Mercosul (`ABC1D23`)
+- Bloqueio de duas vagas simultâneas para o mesmo cliente ou a mesma placa
 
-### 🔐 Administrativo
+### 🔐 Administrador (perfil ADMIN)
 
-- Cadastro de usuários
-- Cadastro de clientes
-- Cadastro e consulta de vagas
-- Check-in de veículos
-- Check-out de veículos
-- Consulta de histórico por CPF
-- Controle de vagas livres e ocupadas
+- **Dashboard**: taxa de ocupação, vagas livres e ocupadas, entradas e saídas do dia, faturamento do dia e total, usuários, clientes, gráfico dos últimos 7 dias e últimas movimentações, com atualização automática
+- **Vagas**: mapa em grade com status, placa e motorista de cada vaga ocupada, e cadastro de novas vagas
+- **No pátio**: veículos estacionados, busca por placa, vaga ou motorista e check-out
+- **Ler QR**: leitura do QR Code pela câmera ou digitação do recibo, com check-out e valor final
+- **Usuários**: usuários do sistema e clientes cadastrados
+- **Check-in manual** para clientes que não usaram o aplicativo
 
-### 📱 Aplicativo Mobile
+### 💰 Tabela de preços
 
-- Tela de login
-- Dashboard inicial
-- Consulta de vagas
-- Check-in e check-out
-- Histórico de estacionamentos
-- Relatório
-- Persistência segura do token JWT
+| Permanência | Valor |
+| --- | --- |
+| Até 15 minutos | R$ 5,00 |
+| Até 1 hora | R$ 9,25 |
+| Cada 15 minutos adicionais | R$ 1,75 |
+| A cada 10 estacionamentos concluídos | 30% de desconto |
 
 ---
 
 ## 🛠 Tecnologias Utilizadas
 
-| Tecnologia | Descrição |
+| Camada | Tecnologias |
 | --- | --- |
-| ![Java](https://img.shields.io/badge/JAVA-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white) | **Java 17 — Backend**<br><br>O backend foi desenvolvido em Java utilizando uma arquitetura em camadas, com controllers, services, repositories e entidades.<br><br>**Principais responsabilidades:**<br>• Regras de negócio do estacionamento<br>• Cadastro de usuários, clientes e vagas<br>• Check-in e check-out de veículos<br>• Histórico de estacionamentos |
-| ![Spring Boot](https://img.shields.io/badge/SPRING%20BOOT-6DB33F?style=for-the-badge&logo=springboot&logoColor=white) | **Spring Boot — API REST**<br><br>O Spring Boot foi utilizado para construir a API REST do sistema.<br><br>**Recursos utilizados:**<br>• Controllers para os endpoints da API<br>• Services para concentrar as regras de negócio<br>• Validações de dados recebidos<br>• Tratamento de exceções<br>• Respostas em JSON |
-| ![Spring Security](https://img.shields.io/badge/SPRING%20SECURITY-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white) | **Spring Security + JWT — Autenticação**<br><br>O sistema utiliza autenticação baseada em token JWT.<br><br>**Funcionalidades:**<br>• Login com e-mail e senha<br>• Geração de token JWT<br>• Proteção de rotas da API<br>• Controle de acesso para os perfis `ADMIN` e `CLIENTE`<br>• Sessão stateless |
-| ![MySQL](https://img.shields.io/badge/MYSQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white) | **MySQL — Banco de Dados**<br><br>O MySQL é utilizado para armazenar os dados do sistema.<br><br>**Dados armazenados:**<br>• Usuários<br>• Clientes<br>• Vagas<br>• Veículos estacionados<br>• Registros de check-in e check-out |
-| ![Hibernate](https://img.shields.io/badge/HIBERNATE-59666C?style=for-the-badge&logo=hibernate&logoColor=white) | **Spring Data JPA + Hibernate — Persistência**<br><br>Responsáveis pela comunicação entre a aplicação Java e o banco MySQL.<br><br>**Recursos utilizados:**<br>• Mapeamento de entidades<br>• Repositories<br>• Consultas paginadas<br>• Persistência de dados com JPA |
-| ![Swagger](https://img.shields.io/badge/SWAGGER-85EA2D?style=for-the-badge&logo=swagger&logoColor=black) | **Swagger / Springdoc — Documentação da API**<br><br>O Swagger documenta e permite testar os endpoints da API diretamente pelo navegador.<br><br>**Acesso:**<br>`http://localhost:8080/docs-park.html` |
-| ![Flutter](https://img.shields.io/badge/FLUTTER-02569B?style=for-the-badge&logo=flutter&logoColor=white) | **Flutter + Dart — Aplicativo Mobile**<br><br>O aplicativo mobile foi desenvolvido em Flutter e integrado à API Spring Boot.<br><br>**Funcionalidades:**<br>• Tela de login<br>• Dashboard<br>• Consulta de vagas<br>• Check-in e check-out<br>• Histórico<br>• Relatório |
-| ![JasperReports](https://img.shields.io/badge/JASPERREPORTS-DF0000?style=for-the-badge) | **JasperReports — Relatórios em PDF**<br><br>Utilizado para gerar relatórios em PDF com os registros de estacionamento do cliente. |
+| Backend | Java 17, Spring Boot 3.2, Spring Security + JWT, Spring Data JPA / Hibernate, Bean Validation |
+| Banco de dados | H2 em memória (dados recriados a cada inicialização) |
+| Documentação da API | Springdoc / Swagger UI |
+| Relatórios | JasperReports (PDF) |
+| Aplicativo | Flutter + Dart (Web, Android, iOS, Windows), `qr_flutter`, `mobile_scanner`, `printing` |
+| Deploy | Vercel (aplicativo web) e Docker (API) |
 
 ---
 
 ## 📂 Estrutura do Projeto
 
 ```text
-ParkingAPI/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/mballem/demoparkapi/
-│   │   │       ├── config/
-│   │   │       ├── entity/
-│   │   │       ├── jwt/
-│   │   │       ├── repository/
-│   │   │       ├── service/
-│   │   │       └── web/
-│   │   └── resources/
-│   │       ├── reports/
-│   │       └── application.properties
-├── flutter/
+ParkApi/
+├── api/                         API REST em Spring Boot
+│   ├── src/main/java/com/mballem/demoparkapi/
+│   │   ├── config/              segurança, auditoria e dados iniciais
+│   │   ├── entity/              entidades JPA
+│   │   ├── jwt/                 autenticação JWT
+│   │   ├── repository/          repositórios e projeções
+│   │   ├── service/             regras de negócio e dashboard
+│   │   └── web/                 controllers, DTOs e tratamento de erros
+│   ├── src/main/resources/      configurações, mensagens e relatórios
+│   ├── Dockerfile
+│   └── pom.xml
+├── park_app/                    aplicativo Flutter
 │   ├── lib/
-│   ├── android/
+│   │   ├── models/              ticket e cálculo de valores
+│   │   ├── screens/cliente/     telas do motorista
+│   │   ├── screens/admin/       painel administrativo
+│   │   ├── services/            API e sessão
+│   │   ├── theme/               cores e estilos
+│   │   └── widgets/             componentes reutilizáveis
 │   └── pubspec.yaml
-├── pom.xml
+├── scripts/                     build do aplicativo na Vercel
+├── vercel.json
 └── README.md
 ```
+
 ---
 
-## 🔧 Instalação e Execução
+## 🔧 Como rodar em qualquer máquina
 
-### Pré-requisitos
+### 1. Instale os pré-requisitos
 
-- Java 17
-- MySQL
-- Flutter SDK
-- Android Studio ou emulador Android
+| Ferramenta | Versão | Como verificar |
+| --- | --- | --- |
+| [Git](https://git-scm.com/downloads) | qualquer | `git --version` |
+| [JDK](https://adoptium.net/temurin/releases/?version=17) | 17 ou superior | `java -version` |
+| [Flutter SDK](https://docs.flutter.dev/get-started/install) | 3.x estável (Dart 3.12+) | `flutter --version` |
+| Google Chrome | qualquer | necessário para rodar o app no navegador |
 
-### 1. Banco de Dados
+> Não é preciso instalar Maven nem banco de dados: o projeto usa o Maven Wrapper (`mvnw`) e o banco H2 em memória.
 
-Crie o banco:
+Depois de instalar o Flutter, rode `flutter doctor` e confirme que o item **Chrome** aparece com ✓.
 
-```sql
-CREATE DATABASE demo_park;
+### 2. Clone o repositório
+
+```bash
+git clone https://github.com/Viniciusmagal/ParkApi.git
+cd ParkApi
 ```
 
-Confira as credenciais em:
+### 3. Suba a API (terminal 1)
 
-```text
-src/main/resources/application.properties
-```
-
-### 2. Backend
-
-Na raiz do projeto:
+**Windows (PowerShell ou CMD)**
 
 ```powershell
+cd api
 .\mvnw.cmd spring-boot:run
 ```
 
-A API estará disponível em:
+**Linux / macOS**
 
-```text
-http://localhost:8080
+```bash
+cd api
+chmod +x mvnw
+./mvnw spring-boot:run
 ```
 
-Swagger:
+A primeira execução baixa as dependências e pode levar alguns minutos. A API está pronta quando aparecer no terminal:
 
 ```text
-http://localhost:8080/docs-park.html
+Dados iniciais prontos: 12 vagas, admin@park.com e cliente@park.com com senha 123456
 ```
 
-### 3. Aplicativo Flutter
+| Recurso | Endereço |
+| --- | --- |
+| API | http://localhost:8080 |
+| Swagger (documentação interativa) | http://localhost:8080/docs-park.html |
+| Console do banco H2 | http://localhost:8080/h2-console (JDBC URL `jdbc:h2:mem:demo_park`, usuário `root`, senha `root`) |
 
-Em outro terminal:
+### 4. Rode o aplicativo (terminal 2)
 
-```powershell
-cd flutter
+```bash
+cd park_app
 flutter pub get
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080
+flutter run -d chrome
 ```
 
-> `10.0.2.2` funciona no emulador Android. Em celular físico, use o IP do computador, por exemplo: `http://192.168.0.10:8080`.
+O navegador abre automaticamente com a tela de login.
+
+### 5. Entre com os usuários de teste
+
+| Perfil | E-mail | Senha |
+| --- | --- | --- |
+| Administrador | `admin@park.com` | `123456` |
+| Motorista | `cliente@park.com` | `123456` |
+
+Também é possível criar novos motoristas pela opção **Criar conta** (a senha deve ter exatamente 6 caracteres).
+
+### 6. Roteiro rápido de teste
+
+1. Entre como **motorista**, toque em **Solicitar vaga**, preencha o formulário e veja o ticket com QR Code na aba **Minha vaga**.
+2. Saia e entre como **administrador**: o dashboard mostra a vaga ocupada e a entrada do dia.
+3. Na aba **Ler QR**, aponte a câmera para o QR Code do motorista ou digite o número do recibo exibido no ticket.
+4. Clique em **Registrar saída e cobrar** para ver o valor final e liberar a vaga.
+
+### Rodando em outros dispositivos
+
+| Onde o app roda | Comando |
+| --- | --- |
+| Navegador (Chrome) | `flutter run -d chrome` |
+| Emulador Android | `flutter run` (o app usa `http://10.0.2.2:8080` automaticamente) |
+| Celular físico na mesma rede Wi-Fi | `flutter run --dart-define=API_BASE_URL=http://IP_DO_COMPUTADOR:8080` |
+| API hospedada em outro servidor | `flutter run -d chrome --dart-define=API_BASE_URL=https://endereco-da-api` |
+
+Para descobrir o IP do computador: `ipconfig` no Windows ou `ip addr` / `ifconfig` no Linux e macOS.
+
+### Rodando a API com Docker (opcional)
+
+```bash
+cd api
+docker build -t parkapi .
+docker run -p 8080:8080 parkapi
+```
+
+### Testes
+
+```bash
+cd park_app
+flutter test
+
+cd ../api
+./mvnw test
+```
+
+### Problemas comuns
+
+| Sintoma | Solução |
+| --- | --- |
+| "Falha de conexão com a API" no app | Confirme que a API está rodando no terminal 1 e acessível em http://localhost:8080/docs-park.html |
+| `Port 8080 was already in use` | Feche o programa que usa a porta 8080 ou rode a API com `--server.port=8081` e o app com `--dart-define=API_BASE_URL=http://127.0.0.1:8081` |
+| `JAVA_HOME is not set` | Configure a variável `JAVA_HOME` apontando para a pasta do JDK 17 |
+| `permission denied: ./mvnw` (Linux/macOS) | Rode `chmod +x mvnw` |
+| Câmera não abre na aba Ler QR | O navegador só libera a câmera em `localhost` ou `https`; use a digitação do recibo como alternativa |
+| Dados sumiram | O banco H2 é em memória e é recriado a cada reinício da API |
+
+---
+
+## ☁️ Deploy
+
+### Aplicativo web na Vercel
+
+O arquivo `vercel.json` já configura o build: a Vercel instala o Flutter, compila o app web e publica a pasta `park_app/build/web`.
+
+1. Na Vercel, clique em **Add New → Project** e importe este repositório do GitHub.
+2. Mantenha **Root Directory** na raiz do repositório (as configurações de build são lidas do `vercel.json`).
+3. Em **Environment Variables**, crie `API_BASE_URL` com o endereço público da API (por exemplo `https://parkapi.onrender.com`).
+4. Clique em **Deploy**. A cada novo push na branch principal a Vercel publica uma nova versão.
+
+### API
+
+A Vercel hospeda apenas o aplicativo web. A API Spring Boot pode ser publicada em qualquer serviço que rode contêineres Docker (Render, Railway, Fly.io, entre outros) usando o `api/Dockerfile`. A porta é lida da variável `PORT` quando o serviço a define.
 
 ---
 
@@ -166,6 +249,13 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080
 | Check-out | `PUT /api/v1/estacionamentos/check-out/{recibo}` |
 | Histórico | `GET /api/v1/estacionamentos` |
 | Relatório PDF | `GET /api/v1/estacionamentos/relatorio` |
+| Solicitar vaga (cliente) | `POST /api/v1/estacionamentos/solicitar` |
+| Ticket ativo do cliente | `GET /api/v1/estacionamentos/ativo` |
+| Veículos no pátio | `GET /api/v1/estacionamentos/ativos` |
+| Histórico geral | `GET /api/v1/estacionamentos/todos` |
+| Lista de vagas | `GET /api/v1/vagas` |
+| Disponibilidade | `GET /api/v1/vagas/disponibilidade` |
+| Dashboard | `GET /api/v1/dashboard` |
 
 ---
 
