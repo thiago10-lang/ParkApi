@@ -117,7 +117,7 @@ Depois de instalar o Flutter, rode `flutter doctor` e confirme que o item **Chro
 ### 2. Clone o repositório
 
 ```bash
-git clone https://github.com/Viniciusmagal/ParkApi.git
+git clone https://github.com/thiago10-lang/ParkApi.git
 cd ParkApi
 ```
 
