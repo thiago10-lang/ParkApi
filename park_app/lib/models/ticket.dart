@@ -1,5 +1,6 @@
 import 'dart:convert';
 import '../utils/formatters.dart';
+import 'tarifa.dart';
 
 class Ticket {
   final String recibo;
@@ -14,6 +15,7 @@ class Ticket {
   final DateTime? dataSaida;
   final double? valor;
   final double? desconto;
+  final String? formaPagamento;
 
   Ticket({
     required this.recibo,
@@ -28,6 +30,7 @@ class Ticket {
     this.dataSaida,
     this.valor,
     this.desconto,
+    this.formaPagamento,
   });
 
   factory Ticket.fromJson(Map<String, dynamic> json) {
@@ -44,6 +47,7 @@ class Ticket {
       dataSaida: Fmt.parseData(json['dataSaida']),
       valor: (json['valor'] as num?)?.toDouble(),
       desconto: (json['desconto'] as num?)?.toDouble(),
+      formaPagamento: json['formaPagamento'],
     );
   }
 
@@ -53,7 +57,7 @@ class Ticket {
 
   Duration get permanencia => (dataSaida ?? DateTime.now()).difference(dataEntrada);
 
-  double get valorEstimado => calcularCusto(permanencia.inMinutes);
+  double get valorEstimado => Tarifa.atual.calcularCusto(permanencia.inMinutes);
 
   double get valorFinal => (valor ?? 0) - (desconto ?? 0);
 
@@ -67,11 +71,19 @@ class Ticket {
         'entrada': Fmt.dataHora(dataEntrada),
       });
 
-  static double calcularCusto(int minutos) {
-    if (minutos <= 15) return 5.00;
-    if (minutos <= 60) return 9.25;
-    final adicionais = ((minutos - 60) / 15).ceil();
-    return 9.25 + 1.75 * adicionais;
+  String get formaPagamentoLabel => rotuloForma(formaPagamento);
+
+  static String rotuloForma(String? forma) {
+    switch (forma) {
+      case 'PIX':
+        return 'Pix';
+      case 'CARTAO':
+        return 'Cartão';
+      case 'DINHEIRO':
+        return 'Dinheiro';
+      default:
+        return 'Não informado';
+    }
   }
 
   static String? reciboDoQr(String conteudo) {

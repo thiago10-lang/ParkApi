@@ -27,23 +27,29 @@ O motorista chega ao estacionamento, solicita a vaga pelo aplicativo e recebe um
 
 - Cadastro e login com autenticação JWT
 - Solicitação de vaga com formulário curto: nome e CPF apenas na primeira vez, depois somente placa, marca, modelo e cor
-- Alocação automática de uma vaga livre
+- **Mapa de vagas** na solicitação: o motorista escolhe a vaga que quer ou deixa o sistema escolher
 - **QR Code** do ticket com recibo, vaga, placa, nome, CPF mascarado e horário de entrada
 - Aba **Minha vaga** com ticket, permanência e valor estimado atualizado em tempo real
 - Aba **Histórico** com todas as visitas, total pago e relatório em PDF
 - Aceita placas no padrão antigo (`ABC-1234`) e Mercosul (`ABC1D23`)
 - Bloqueio de duas vagas simultâneas para o mesmo cliente ou a mesma placa
+- **Minha conta**: dados do usuário e alteração de senha
 
 ### 🔐 Administrador (perfil ADMIN)
 
-- **Dashboard**: taxa de ocupação, vagas livres e ocupadas, entradas e saídas do dia, faturamento do dia e total, usuários, clientes, gráfico dos últimos 7 dias e últimas movimentações, com atualização automática
+- **Dashboard**: taxa de ocupação, vagas livres e ocupadas, entradas e saídas do dia, faturamento do dia e total, usuários, clientes, gráficos de faturamento e de entradas dos últimos 7 dias, recebimentos por forma de pagamento e últimas movimentações, com atualização automática
 - **Vagas**: mapa em grade com status, placa e motorista de cada vaga ocupada, e cadastro de novas vagas
 - **No pátio**: veículos estacionados, busca por placa, vaga ou motorista e check-out
 - **Ler QR**: leitura do QR Code pela câmera ou digitação do recibo, com check-out e valor final
-- **Usuários**: usuários do sistema e clientes cadastrados
+- **Pagamento na saída**: prévia do valor, escolha entre Pix, cartão ou dinheiro e **QR Code Pix copia e cola** com o valor exato
+- **Histórico**: todos os estacionamentos com filtro por placa e período e **exportação para planilha (CSV)**
+- **Usuários**: usuários do sistema, clientes cadastrados e promoção de usuários a administrador
+- **Configurações**: tabela de preços, programa de fidelidade e chave Pix do estacionamento, com simulação de valores
 - **Check-in manual** para clientes que não usaram o aplicativo
 
 ### 💰 Tabela de preços
+
+Valores padrão, que o administrador pode alterar na aba **Configurações**:
 
 | Permanência | Valor |
 | --- | --- |
@@ -165,7 +171,10 @@ O navegador abre automaticamente com a tela de login.
 | Perfil | E-mail | Senha |
 | --- | --- | --- |
 | Administrador | `admin@park.com` | `123456` |
-| Motorista | `cliente@park.com` | `123456` |
+| Motorista sem histórico | `cliente@park.com` | `123456` |
+| Motoristas com histórico | `motorista1@park.com` a `motorista6@park.com` | `123456` |
+
+A API também gera uma semana de movimentação de demonstração (entradas, saídas, pagamentos e quatro veículos no pátio), para o dashboard já começar com dados. Para iniciar sem esses dados, use `app.seed.demo=false` em `api/src/main/resources/application.properties`.
 
 Também é possível criar novos motoristas pela opção **Criar conta** (a senha deve ter exatamente 6 caracteres).
 
@@ -174,7 +183,9 @@ Também é possível criar novos motoristas pela opção **Criar conta** (a senh
 1. Entre como **motorista**, toque em **Solicitar vaga**, preencha o formulário e veja o ticket com QR Code na aba **Minha vaga**.
 2. Saia e entre como **administrador**: o dashboard mostra a vaga ocupada e a entrada do dia.
 3. Na aba **Ler QR**, aponte a câmera para o QR Code do motorista ou digite o número do recibo exibido no ticket.
-4. Clique em **Registrar saída e cobrar** para ver o valor final e liberar a vaga.
+4. Clique em **Registrar saída e cobrar**, escolha a forma de pagamento e confirme para liberar a vaga.
+5. Em **Configurações**, informe a chave Pix do estacionamento para que a saída mostre o QR Code Pix com o valor da cobrança.
+6. Em **Histórico**, filtre por período e clique em **Exportar planilha** para baixar o CSV.
 
 ### Rodando em outros dispositivos
 
@@ -263,6 +274,14 @@ A API também pode ser publicada em qualquer outro serviço que rode contêinere
 | Lista de vagas | `GET /api/v1/vagas` |
 | Disponibilidade | `GET /api/v1/vagas/disponibilidade` |
 | Dashboard | `GET /api/v1/dashboard` |
+| Mapa de vagas (motorista) | `GET /api/v1/vagas/mapa` |
+| Prévia do valor de saída | `GET /api/v1/estacionamentos/check-in/{recibo}/previa` |
+| Check-out com forma de pagamento | `PUT /api/v1/estacionamentos/check-out/{recibo}?formaPagamento=PIX` |
+| Histórico com filtros | `GET /api/v1/estacionamentos/todos?placa=&inicio=&fim=` |
+| Exportar CSV | `GET /api/v1/estacionamentos/exportar` |
+| Tabela de preços | `GET` / `PUT /api/v1/tarifas` |
+| Usuário logado | `GET /api/v1/usuarios/me` |
+| Alterar perfil | `PATCH /api/v1/usuarios/{id}/perfil` |
 
 ---
 

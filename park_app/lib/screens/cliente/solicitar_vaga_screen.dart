@@ -27,6 +27,8 @@ class _SolicitarVagaScreenState extends State<SolicitarVagaScreen> {
   bool _carregandoCliente = true;
   bool _enviando = false;
   Map<String, dynamic>? _cliente;
+  List<Map<String, dynamic>> _vagas = [];
+  String? _vagaEscolhida;
 
   @override
   void initState() {
@@ -35,6 +37,12 @@ class _SolicitarVagaScreenState extends State<SolicitarVagaScreen> {
   }
 
   Future<void> _buscarCliente() async {
+    try {
+      final mapa = await ApiService.getJson('/vagas/mapa');
+      _vagas = List<Map<String, dynamic>>.from(mapa);
+    } on ApiException catch (_) {
+      _vagas = [];
+    }
     try {
       final data = await ApiService.getJson('/clientes/detalhes');
       _cliente = Map<String, dynamic>.from(data);
@@ -55,14 +63,75 @@ class _SolicitarVagaScreenState extends State<SolicitarVagaScreen> {
         'marca': _marcaController.text.trim(),
         'modelo': _modeloController.text.trim(),
         'cor': _corController.text.trim(),
+        if (_vagaEscolhida != null) 'vagaCodigo': _vagaEscolhida,
       });
       if (!mounted) return;
       Navigator.pop(context, Ticket.fromJson(Map<String, dynamic>.from(data)));
     } on ApiException catch (e) {
       if (mounted) showMessage(context, e.message, error: true);
+      if (e.status == 409 && _vagaEscolhida != null) {
+        await _buscarCliente();
+        if (mounted) setState(() => _vagaEscolhida = null);
+      }
     } finally {
       if (mounted) setState(() => _enviando = false);
     }
+  }
+
+  Widget _mapaVagas() {
+    if (_vagas.isEmpty) return const SizedBox.shrink();
+    final livres = _vagas.where((v) => v['status'] == 'LIVRE').length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+        SectionTitle('Escolha sua vaga', trailing: Text('$livres livres', style: const TextStyle(color: AppColors.textMuted, fontSize: 13))),
+        ChoiceChip(
+          avatar: const Icon(Icons.auto_awesome, size: 18),
+          label: const Text('Escolher automaticamente'),
+          selected: _vagaEscolhida == null,
+          onSelected: (_) => setState(() => _vagaEscolhida = null),
+        ),
+        const SizedBox(height: 12),
+        GridView.extent(
+          maxCrossAxisExtent: 84,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          childAspectRatio: 1.3,
+          children: _vagas.map((v) {
+            final codigo = v['codigo'] as String;
+            final livre = v['status'] == 'LIVRE';
+            final escolhida = _vagaEscolhida == codigo;
+            return InkWell(
+              onTap: livre ? () => setState(() => _vagaEscolhida = codigo) : null,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: escolhida ? AppColors.primary : (livre ? Colors.white : AppColors.inputFill),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: escolhida ? AppColors.primary : (livre ? AppColors.success : AppColors.border), width: 1.5),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(codigo, style: TextStyle(fontWeight: FontWeight.bold, color: escolhida ? Colors.white : (livre ? AppColors.textStrong : AppColors.textSoft))),
+                    Icon(livre ? Icons.local_parking : Icons.directions_car, size: 16, color: escolhida ? Colors.white : (livre ? AppColors.success : AppColors.textSoft)),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _vagaEscolhida == null ? 'O sistema reservará a primeira vaga livre.' : 'Você escolheu a vaga $_vagaEscolhida.',
+          style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+        ),
+      ],
+    );
   }
 
   String? _obrigatorio(String? v, String campo) => (v == null || v.trim().isEmpty) ? 'Informe $campo' : null;
@@ -203,6 +272,7 @@ class _SolicitarVagaScreenState extends State<SolicitarVagaScreen> {
                                 ))
                             .toList(),
                       ),
+                      _mapaVagas(),
                       const SizedBox(height: 28),
                       ElevatedButton(
                         onPressed: _enviando ? null : _enviar,

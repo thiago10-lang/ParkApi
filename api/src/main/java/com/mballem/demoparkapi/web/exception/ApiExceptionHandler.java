@@ -126,6 +126,14 @@ public class ApiExceptionHandler {
                 .body(new ErrorMessage(request, ex.getStatus(), message));
     }
 
+    @ExceptionHandler(RegraNegocioException.class)
+    public ResponseEntity<ErrorMessage> regraNegocioException(RegraNegocioException ex, HttpServletRequest request) {
+        return ResponseEntity
+                .status(ex.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorMessage(request, ex.getStatus(), ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorMessage> methodArgumentNotValidException(MethodArgumentNotValidException ex,
                                                                         HttpServletRequest request,

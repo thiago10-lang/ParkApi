@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import '../../models/tarifa.dart';
 import '../../services/session.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/common.dart';
 import '../checkin_screen.dart';
+import '../perfil_screen.dart';
 import 'ativos_tab.dart';
+import 'configuracoes_tab.dart';
 import 'dashboard_tab.dart';
+import 'historico_admin_tab.dart';
 import 'usuarios_tab.dart';
 import 'vagas_tab.dart';
 import 'validar_qr_tab.dart';
@@ -25,8 +29,16 @@ class _AdminShellState extends State<AdminShell> {
     (Icons.grid_view_outlined, Icons.grid_view, 'Vagas'),
     (Icons.directions_car_outlined, Icons.directions_car, 'No pátio'),
     (Icons.qr_code_scanner_outlined, Icons.qr_code_scanner, 'Ler QR'),
+    (Icons.receipt_long_outlined, Icons.receipt_long, 'Histórico'),
     (Icons.people_outline, Icons.people, 'Usuários'),
+    (Icons.settings_outlined, Icons.settings, 'Configurações'),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    Tarifa.carregar();
+  }
 
   void _ir(int index) => setState(() {
         _index = index;
@@ -49,8 +61,12 @@ class _AdminShellState extends State<AdminShell> {
         return AtivosTab(key: key);
       case 3:
         return ValidarQrTab(key: key);
-      default:
+      case 4:
+        return HistoricoAdminTab(key: key);
+      case 5:
         return UsuariosTab(key: key);
+      default:
+        return ConfiguracoesTab(key: key);
     }
   }
 
@@ -86,7 +102,12 @@ class _AdminShellState extends State<AdminShell> {
             ),
           IconButton(tooltip: 'Check-in manual', icon: const Icon(Icons.add_circle_outline), onPressed: _checkInManual),
           IconButton(tooltip: 'Atualizar', icon: const Icon(Icons.refresh), onPressed: () => setState(() => _versao++)),
-          IconButton(tooltip: 'Sair', icon: const Icon(Icons.logout), onPressed: () => logout(context)),
+          IconButton(
+            tooltip: 'Minha conta',
+            icon: const Icon(Icons.account_circle_outlined),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PerfilScreen())),
+          ),
+          if (largo) IconButton(tooltip: 'Sair', icon: const Icon(Icons.logout), onPressed: () => logout(context)),
           const SizedBox(width: 8),
         ],
         bottom: const PreferredSize(preferredSize: Size.fromHeight(1), child: Divider(height: 1, color: AppColors.border)),

@@ -22,4 +22,5 @@ public interface ClienteVagaProjection {
     String getVagaCodigo();
     BigDecimal getValor();
     BigDecimal getDesconto();
+    String getFormaPagamento();
 }

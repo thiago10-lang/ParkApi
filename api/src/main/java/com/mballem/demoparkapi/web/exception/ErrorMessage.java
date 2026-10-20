@@ -48,9 +48,7 @@ public class ErrorMessage {
     private void addErrors(BindingResult result, MessageSource messageSource, Locale locale) {
         this.errors = new HashMap<>();
         for (FieldError fieldError : result.getFieldErrors()) {
-            String code = fieldError.getCodes()[0];
-            String message = messageSource.getMessage(code, fieldError.getArguments(), locale);
-            this.errors.put(fieldError.getField(), message);
+            this.errors.put(fieldError.getField(), messageSource.getMessage(fieldError, locale));
         }
     }
 }

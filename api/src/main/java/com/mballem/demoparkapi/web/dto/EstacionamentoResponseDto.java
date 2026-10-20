@@ -30,4 +30,5 @@ public class EstacionamentoResponseDto {
     private String vagaCodigo;
     private BigDecimal valor;
     private BigDecimal desconto;
+    private String formaPagamento;
 }

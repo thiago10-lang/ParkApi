@@ -2,7 +2,9 @@ package com.mballem.demoparkapi.service;
 
 import com.mballem.demoparkapi.entity.Cliente;
 import com.mballem.demoparkapi.entity.ClienteVaga;
+import com.mballem.demoparkapi.entity.Tarifa;
 import com.mballem.demoparkapi.entity.Vaga;
+import com.mballem.demoparkapi.exception.RegraNegocioException;
 import com.mballem.demoparkapi.exception.SolicitacaoVagaException;
 import com.mballem.demoparkapi.util.EstacionamentoUtils;
 import com.mballem.demoparkapi.web.dto.SolicitacaoVagaDto;
@@ -21,11 +23,15 @@ public class EstacionamentoService {
     private final ClienteVagaService clienteVagaService;
     private final ClienteService clienteService;
     private final VagaService vagaService;
+    private final TarifaService tarifaService;
+
+    public record Previa(ClienteVaga clienteVaga, LocalDateTime saida, BigDecimal valor, BigDecimal desconto) {
+    }
 
     @Transactional
     public ClienteVaga checkIn(ClienteVaga clienteVaga) {
         Cliente cliente = clienteService.buscarPorCpf(clienteVaga.getCliente().getCpf());
-        return registrarEntrada(clienteVaga, cliente);
+        return registrarEntrada(clienteVaga, cliente, null);
     }
 
     @Transactional
@@ -46,33 +52,38 @@ public class EstacionamentoService {
         clienteVaga.setMarca(dto.getMarca().trim());
         clienteVaga.setModelo(dto.getModelo().trim());
         clienteVaga.setCor(dto.getCor().trim());
-        return registrarEntrada(clienteVaga, cliente);
+        return registrarEntrada(clienteVaga, cliente, dto.getVagaCodigo());
     }
 
     @Transactional
-    public ClienteVaga checkOut(String recibo) {
+    public Previa calcularPrevia(String recibo) {
         ClienteVaga clienteVaga = clienteVagaService.buscarPorRecibo(recibo);
-
-        LocalDateTime dataSaida = LocalDateTime.now();
-
-        BigDecimal valor = EstacionamentoUtils.calcularCusto(clienteVaga.getDataEntrada(), dataSaida);
-        clienteVaga.setValor(valor);
-
+        LocalDateTime saida = LocalDateTime.now();
+        Tarifa tarifa = tarifaService.obter();
+        BigDecimal valor = EstacionamentoUtils.calcularCusto(clienteVaga.getDataEntrada(), saida, tarifa);
         long totalDeVezes = clienteVagaService.getTotalDeVezesEstacionamentoCompleto(clienteVaga.getCliente().getCpf());
+        BigDecimal desconto = EstacionamentoUtils.calcularDesconto(valor, totalDeVezes, tarifa);
+        return new Previa(clienteVaga, saida, valor, desconto);
+    }
 
-        BigDecimal desconto = EstacionamentoUtils.calcularDesconto(valor, totalDeVezes);
-        clienteVaga.setDesconto(desconto);
+    @Transactional
+    public ClienteVaga checkOut(String recibo, ClienteVaga.FormaPagamento formaPagamento) {
+        Previa previa = calcularPrevia(recibo);
+        ClienteVaga clienteVaga = previa.clienteVaga();
 
-        clienteVaga.setDataSaida(dataSaida);
+        clienteVaga.setValor(previa.valor());
+        clienteVaga.setDesconto(previa.desconto());
+        clienteVaga.setDataSaida(previa.saida());
+        clienteVaga.setFormaPagamento(formaPagamento);
         clienteVaga.getVaga().setStatus(Vaga.StatusVaga.LIVRE);
 
         return clienteVagaService.salvar(clienteVaga);
     }
 
-    private ClienteVaga registrarEntrada(ClienteVaga clienteVaga, Cliente cliente) {
+    private ClienteVaga registrarEntrada(ClienteVaga clienteVaga, Cliente cliente, String codigoVaga) {
         clienteVaga.setCliente(cliente);
 
-        Vaga vaga = vagaService.buscarPorVagaLivre();
+        Vaga vaga = escolherVaga(codigoVaga);
         vaga.setStatus(Vaga.StatusVaga.OCUPADA);
         clienteVaga.setVaga(vaga);
 
@@ -81,5 +92,17 @@ public class EstacionamentoService {
         clienteVaga.setRecibo(EstacionamentoUtils.gerarRecibo());
 
         return clienteVagaService.salvar(clienteVaga);
+    }
+
+    private Vaga escolherVaga(String codigoVaga) {
+        if (codigoVaga == null || codigoVaga.isBlank()) {
+            return vagaService.buscarPorVagaLivre();
+        }
+        Vaga vaga = vagaService.buscarPorCodigo(codigoVaga.trim().toUpperCase());
+        if (vaga.getStatus() != Vaga.StatusVaga.LIVRE) {
+            throw new RegraNegocioException(
+                    "A vaga " + vaga.getCodigo() + " acabou de ser ocupada. Escolha outra vaga.", HttpStatus.CONFLICT);
+        }
+        return vaga;
     }
 }

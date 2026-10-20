@@ -57,6 +57,14 @@ class ApiService {
         ));
   }
 
+  static Future<http.Response> patch(String endpoint, Map<String, dynamic> body) {
+    return _send(() => http.patch(Uri.parse('$baseUrl$endpoint'), headers: _headers(), body: jsonEncode(body)));
+  }
+
+  static Future<http.Response> getBytes(String endpoint, {String accept = '*/*'}) {
+    return _send(() => http.get(Uri.parse('$baseUrl$endpoint'), headers: {..._headers(), 'Accept': accept}));
+  }
+
   static dynamic decode(http.Response response) {
     if (response.bodyBytes.isEmpty) return null;
     return jsonDecode(utf8.decode(response.bodyBytes));

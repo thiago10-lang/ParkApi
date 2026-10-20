@@ -98,4 +98,11 @@ public class VagaController {
     public ResponseEntity<DisponibilidadeDto> getDisponibilidade() {
         return ResponseEntity.ok(vagaService.buscarDisponibilidade());
     }
+
+    @Operation(summary = "Mapa de vagas", description = "Código e situação de cada vaga, sem dados dos motoristas. " +
+            "Requisição exige uso de um bearer token.", security = @SecurityRequirement(name = "security"))
+    @GetMapping("/mapa")
+    public ResponseEntity<List<VagaResponseDto>> getMapa() {
+        return ResponseEntity.ok(vagaService.buscarTodas().stream().map(VagaMapper::toDto).toList());
+    }
 }

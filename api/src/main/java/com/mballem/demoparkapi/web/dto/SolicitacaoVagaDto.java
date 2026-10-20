@@ -25,4 +25,6 @@ public class SolicitacaoVagaDto {
     @NotBlank(message = "{NotBlank.solicitacaoVagaDto.cor}")
     @Size(max = 45)
     private String cor;
+    @Size(max = 4, message = "Código de vaga inválido.")
+    private String vagaCodigo;
 }

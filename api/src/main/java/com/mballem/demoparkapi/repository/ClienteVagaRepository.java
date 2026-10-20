@@ -46,4 +46,23 @@ public interface ClienteVagaRepository extends JpaRepository<ClienteVaga, Long> 
 
     @Query("select coalesce(sum(cv.valor - coalesce(cv.desconto, 0)), 0) from ClienteVaga cv where cv.dataSaida is not null")
     BigDecimal somarFaturamentoTotal();
+
+    String SELECT_PROJECAO = "select cv.placa as placa, cv.marca as marca, cv.modelo as modelo, cv.cor as cor, " +
+            "c.cpf as clienteCpf, c.nome as clienteNome, cv.recibo as recibo, cv.dataEntrada as dataEntrada, " +
+            "cv.dataSaida as dataSaida, v.codigo as vagaCodigo, cv.valor as valor, cv.desconto as desconto, " +
+            "cv.formaPagamento as formaPagamento ";
+    String FILTROS = "from ClienteVaga cv join cv.cliente c join cv.vaga v where upper(cv.placa) like :placa " +
+            "and cv.dataEntrada >= :inicio and cv.dataEntrada < :fim";
+
+    @Query(value = SELECT_PROJECAO + FILTROS, countQuery = "select count(cv) " + FILTROS)
+    Page<ClienteVagaProjection> buscarComFiltros(String placa, LocalDateTime inicio, LocalDateTime fim, Pageable pageable);
+
+    @Query(SELECT_PROJECAO + FILTROS + " order by cv.dataEntrada desc")
+    List<ClienteVagaProjection> listarComFiltros(String placa, LocalDateTime inicio, LocalDateTime fim);
+
+    List<ClienteVaga> findAllByDataSaidaGreaterThanEqual(LocalDateTime inicio);
+
+    @Query("select cv.formaPagamento, coalesce(sum(cv.valor - coalesce(cv.desconto, 0)), 0) from ClienteVaga cv " +
+            "where cv.dataSaida is not null group by cv.formaPagamento")
+    List<Object[]> somarFaturamentoPorFormaPagamento();
 }

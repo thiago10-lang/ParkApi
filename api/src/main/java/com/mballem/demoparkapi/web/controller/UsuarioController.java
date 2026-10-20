@@ -1,8 +1,10 @@
 package com.mballem.demoparkapi.web.controller;
 
 import com.mballem.demoparkapi.entity.Usuario;
+import com.mballem.demoparkapi.jwt.JwtUserDetails;
 import com.mballem.demoparkapi.service.UsuarioService;
 import com.mballem.demoparkapi.web.dto.UsuarioCreateDto;
+import com.mballem.demoparkapi.web.dto.UsuarioPerfilDto;
 import com.mballem.demoparkapi.web.dto.UsuarioResponseDto;
 import com.mballem.demoparkapi.web.dto.UsuarioSenhaDto;
 import com.mballem.demoparkapi.web.dto.mapper.UsuarioMapper;
@@ -19,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -96,5 +99,22 @@ public class UsuarioController {
     public ResponseEntity<List<UsuarioResponseDto>> getAll() {
         List<Usuario> users = usuarioService.buscarTodos();
         return ResponseEntity.ok(UsuarioMapper.toListDto(users));
+    }
+
+    @Operation(summary = "Dados do usuário autenticado", description = "Requisição exige um Bearer Token.",
+            security = @SecurityRequirement(name = "security"))
+    @GetMapping("/me")
+    public ResponseEntity<UsuarioResponseDto> getMe(@AuthenticationPrincipal JwtUserDetails userDetails) {
+        return ResponseEntity.ok(UsuarioMapper.toDto(usuarioService.buscarPorId(userDetails.getId())));
+    }
+
+    @Operation(summary = "Alterar o perfil de um usuário", description = "Promove um usuário a administrador ou o torna cliente. " +
+            "Acesso restrito a ADMIN", security = @SecurityRequirement(name = "security"))
+    @PatchMapping("/{id}/perfil")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UsuarioResponseDto> updatePerfil(@PathVariable Long id, @Valid @RequestBody UsuarioPerfilDto dto,
+                                                           @AuthenticationPrincipal JwtUserDetails userDetails) {
+        Usuario usuario = usuarioService.alterarPerfil(id, Usuario.Role.valueOf("ROLE_" + dto.getRole()), userDetails.getId());
+        return ResponseEntity.ok(UsuarioMapper.toDto(usuario));
     }
 }

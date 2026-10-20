@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -69,5 +71,27 @@ public class ClienteVagaService {
     @Transactional(readOnly = true)
     public boolean existeAtivoPorPlaca(String placa) {
         return repository.existsByPlacaAndDataSaidaIsNull(placa);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ClienteVagaProjection> buscarComFiltros(String placa, LocalDate inicio, LocalDate fim, Pageable pageable) {
+        return repository.buscarComFiltros(padraoPlaca(placa), inicioDe(inicio), fimDe(fim), pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ClienteVagaProjection> listarComFiltros(String placa, LocalDate inicio, LocalDate fim) {
+        return repository.listarComFiltros(padraoPlaca(placa), inicioDe(inicio), fimDe(fim));
+    }
+
+    private String padraoPlaca(String placa) {
+        return placa == null || placa.isBlank() ? "%" : "%" + placa.trim().toUpperCase() + "%";
+    }
+
+    private LocalDateTime inicioDe(LocalDate inicio) {
+        return inicio == null ? LocalDateTime.of(2000, 1, 1, 0, 0) : inicio.atStartOfDay();
+    }
+
+    private LocalDateTime fimDe(LocalDate fim) {
+        return fim == null ? LocalDateTime.of(2999, 12, 31, 0, 0) : fim.plusDays(1).atStartOfDay();
     }
 }

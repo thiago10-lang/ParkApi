@@ -27,11 +27,28 @@ public class DashboardDto {
     private List<EntradasDia> entradasUltimos7Dias = new ArrayList<>();
     @Builder.Default
     private List<ClienteVagaProjection> ultimasMovimentacoes = new ArrayList<>();
+    @Builder.Default
+    private List<FaturamentoDia> faturamentoUltimos7Dias = new ArrayList<>();
+    @Builder.Default
+    private List<FaturamentoForma> faturamentoPorFormaPagamento = new ArrayList<>();
 
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor
     public static class EntradasDia {
         @JsonFormat(pattern = "yyyy-MM-dd")
         private LocalDate dia;
         private long entradas;
+    }
+
+    @Getter @Setter @NoArgsConstructor @AllArgsConstructor
+    public static class FaturamentoDia {
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        private LocalDate dia;
+        private BigDecimal valor;
+    }
+
+    @Getter @Setter @NoArgsConstructor @AllArgsConstructor
+    public static class FaturamentoForma {
+        private String forma;
+        private BigDecimal valor;
     }
 }

@@ -7,6 +7,7 @@ import com.mballem.demoparkapi.service.ClienteService;
 import com.mballem.demoparkapi.service.ClienteVagaService;
 import com.mballem.demoparkapi.service.EstacionamentoService;
 import com.mballem.demoparkapi.service.JasperService;
+import com.mballem.demoparkapi.util.CsvExporter;
 import com.mballem.demoparkapi.web.dto.EstacionamentoCreateDto;
 import com.mballem.demoparkapi.web.dto.EstacionamentoResponseDto;
 import com.mballem.demoparkapi.web.dto.PageableDto;
@@ -30,6 +31,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -40,6 +42,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.List;
 
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.PATH;
@@ -130,8 +134,9 @@ public class EstacionamentoController {
             })
     @PutMapping("/check-out/{recibo}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<EstacionamentoResponseDto> checkout(@PathVariable String recibo) {
-        ClienteVaga clienteVaga = estacionamentoService.checkOut(recibo);
+    public ResponseEntity<EstacionamentoResponseDto> checkout(@PathVariable String recibo,
+                                                              @RequestParam(required = false) ClienteVaga.FormaPagamento formaPagamento) {
+        ClienteVaga clienteVaga = estacionamentoService.checkOut(recibo, formaPagamento);
         EstacionamentoResponseDto dto = ClienteVagaMapper.toDto(clienteVaga);
         return ResponseEntity.ok(dto);
     }
@@ -289,8 +294,38 @@ public class EstacionamentoController {
             security = @SecurityRequirement(name = "security"))
     @GetMapping("/todos")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<PageableDto> getTodos(@Parameter(hidden = true) @PageableDefault(
-            size = 20, sort = "dataEntrada", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(PageableMapper.toDto(clienteVagaService.buscarTodos(pageable)));
+    public ResponseEntity<PageableDto> getTodos(@RequestParam(required = false) String placa,
+                                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+                                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
+                                                @Parameter(hidden = true) @PageableDefault(
+                                                        size = 20, sort = "dataEntrada", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(PageableMapper.toDto(clienteVagaService.buscarComFiltros(placa, inicio, fim, pageable)));
+    }
+
+    @Operation(summary = "Exportar histórico em CSV", description = "Planilha com os estacionamentos filtrados por placa e período. " +
+            "Acesso restrito a Role='ADMIN'", security = @SecurityRequirement(name = "security"))
+    @GetMapping(value = "/exportar", produces = "text/csv")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<byte[]> exportar(@RequestParam(required = false) String placa,
+                                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+                                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim) {
+        byte[] csv = CsvExporter.estacionamentos(clienteVagaService.listarComFiltros(placa, inicio, fim));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=estacionamentos.csv")
+                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                .body(csv);
+    }
+
+    @Operation(summary = "Prévia da saída", description = "Calcula valor, desconto e total a pagar sem registrar a saída. " +
+            "Acesso restrito a Role='ADMIN'", security = @SecurityRequirement(name = "security"))
+    @GetMapping("/check-in/{recibo}/previa")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<EstacionamentoResponseDto> getPrevia(@PathVariable String recibo) {
+        EstacionamentoService.Previa previa = estacionamentoService.calcularPrevia(recibo);
+        EstacionamentoResponseDto dto = ClienteVagaMapper.toDto(previa.clienteVaga());
+        dto.setDataSaida(previa.saida());
+        dto.setValor(previa.valor());
+        dto.setDesconto(previa.desconto());
+        return ResponseEntity.ok(dto);
     }
 }

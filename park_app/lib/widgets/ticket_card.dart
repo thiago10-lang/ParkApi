@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import '../models/tarifa.dart';
 import '../models/ticket.dart';
 import '../theme/app_colors.dart';
 import '../utils/formatters.dart';
@@ -90,6 +91,7 @@ class TicketCard extends StatelessWidget {
                   InfoRow('Valor', Fmt.moeda(ticket.valor)),
                   if ((ticket.desconto ?? 0) > 0) InfoRow('Desconto', '- ${Fmt.moeda(ticket.desconto)}'),
                   InfoRow('Total pago', Fmt.moeda(ticket.valorFinal), strong: true),
+                  if (ticket.formaPagamento != null) InfoRow('Pagamento', ticket.formaPagamentoLabel),
                 ],
               ],
             ),
@@ -105,18 +107,20 @@ class TabelaPrecos extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = Tarifa.atual;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: AppColors.card(),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Tabela de preços', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textStrong)),
-          SizedBox(height: 8),
-          InfoRow('Até 15 min', 'R\$ 5,00'),
-          InfoRow('Até 1 hora', 'R\$ 9,25'),
-          InfoRow('Cada 15 min extra', 'R\$ 1,75'),
-          InfoRow('A cada 10 usos', '30% de desconto'),
+          const Text('Tabela de preços', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textStrong)),
+          const SizedBox(height: 8),
+          InfoRow('Até 15 min', Fmt.moeda(t.primeiros15Minutos)),
+          InfoRow('Até 1 hora', Fmt.moeda(t.primeiraHora)),
+          InfoRow('Cada 15 min extra', Fmt.moeda(t.adicional15Minutos)),
+          if (t.descontoPercentual > 0)
+            InfoRow('A cada ${t.usosParaDesconto} usos', '${t.descontoPercentual}% de desconto'),
         ],
       ),
     );

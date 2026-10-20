@@ -86,21 +86,17 @@ class _DashboardTabState extends State<DashboardTab> {
             children: cards,
           ),
           const SizedBox(height: 16),
-          LayoutBuilder(builder: (context, c) {
-            final grafico = _grafico(List<Map<String, dynamic>>.from(d['entradasUltimos7Dias'] ?? []));
-            final movimentos = _movimentacoes(List<Map<String, dynamic>>.from(d['ultimasMovimentacoes'] ?? []));
-            if (c.maxWidth < 900) {
-              return Column(children: [grafico, const SizedBox(height: 16), movimentos]);
-            }
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: grafico),
-                const SizedBox(width: 16),
-                Expanded(child: movimentos),
-              ],
-            );
-          }),
+          _linha(
+            _grafico('Faturamento nos últimos 7 dias', List<Map<String, dynamic>>.from(d['faturamentoUltimos7Dias'] ?? []), 'valor',
+                (v) => 'R\$ ${v.round()}', AppColors.success),
+            _formasPagamento(List<Map<String, dynamic>>.from(d['faturamentoPorFormaPagamento'] ?? [])),
+          ),
+          const SizedBox(height: 16),
+          _linha(
+            _grafico('Entradas nos últimos 7 dias', List<Map<String, dynamic>>.from(d['entradasUltimos7Dias'] ?? []), 'entradas',
+                (v) => '${v.toInt()}', AppColors.primary),
+            _movimentacoes(List<Map<String, dynamic>>.from(d['ultimasMovimentacoes'] ?? [])),
+          ),
         ],
       ),
     );
@@ -142,21 +138,91 @@ class _DashboardTabState extends State<DashboardTab> {
     );
   }
 
-  Widget _grafico(List<Map<String, dynamic>> dias) {
-    final maximo = dias.fold<num>(0, (m, e) => (e['entradas'] as num) > m ? e['entradas'] as num : m);
+  Widget _linha(Widget esquerda, Widget direita) {
+    return LayoutBuilder(builder: (context, c) {
+      if (c.maxWidth < 900) {
+        return Column(children: [esquerda, const SizedBox(height: 16), direita]);
+      }
+      return IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: esquerda),
+            const SizedBox(width: 16),
+            Expanded(child: direita),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _formasPagamento(List<Map<String, dynamic>> formas) {
+    const cores = {'PIX': AppColors.primary, 'CARTAO': AppColors.warning, 'DINHEIRO': AppColors.success};
+    final total = formas.fold<double>(0, (s, f) => s + (f['valor'] as num).toDouble());
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: AppColors.card(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SectionTitle('Entradas nos últimos 7 dias'),
+          SectionTitle('Recebimentos por forma de pagamento',
+              trailing: Text(Fmt.moeda(total), style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textStrong))),
+          if (formas.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: Text('Nenhum pagamento registrado ainda.', style: TextStyle(color: AppColors.textMuted))),
+            ),
+          ...formas.map((f) {
+            final valor = (f['valor'] as num).toDouble();
+            final fracao = total == 0 ? 0.0 : valor / total;
+            final cor = cores[f['forma']] ?? AppColors.textMuted;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(width: 10, height: 10, decoration: BoxDecoration(color: cor, shape: BoxShape.circle)),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(Ticket.rotuloForma(f['forma']), style: const TextStyle(fontWeight: FontWeight.w600))),
+                      Text('${Fmt.moeda(valor)} · ${(fracao * 100).toStringAsFixed(0)}%', style: const TextStyle(color: AppColors.textMuted)),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: fracao,
+                      minHeight: 10,
+                      backgroundColor: AppColors.inputFill,
+                      valueColor: AlwaysStoppedAnimation(cor),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _grafico(String titulo, List<Map<String, dynamic>> dias, String chave, String Function(num) rotulo, Color cor) {
+    final maximo = dias.fold<num>(0, (m, e) => (e[chave] as num) > m ? e[chave] as num : m);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: AppColors.card(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionTitle(titulo),
           SizedBox(
             height: 180,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: dias.map((e) {
-                final valor = (e['entradas'] as num).toInt();
+                final valor = e[chave] as num;
                 final dia = DateTime.parse(e['dia']);
                 final hoje = dia.day == DateTime.now().day;
                 final altura = maximo == 0 ? 0.0 : 120 * valor / maximo;
@@ -166,17 +232,17 @@ class _DashboardTabState extends State<DashboardTab> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Text('$valor', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.text)),
+                        Text(rotulo(valor), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.text)),
                         const SizedBox(height: 4),
                         Container(
                           height: altura < 4 ? 4 : altura,
                           decoration: BoxDecoration(
-                            color: hoje ? AppColors.primary : AppColors.primary.withValues(alpha: 0.35),
+                            color: hoje ? cor : cor.withValues(alpha: 0.35),
                             borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
                           ),
                         ),
                         const SizedBox(height: 6),
-                        Text(Fmt.diaSemana(dia), style: TextStyle(fontSize: 12, color: hoje ? AppColors.primary : AppColors.textMuted)),
+                        Text(Fmt.diaSemana(dia), style: TextStyle(fontSize: 12, color: hoje ? cor : AppColors.textMuted)),
                       ],
                     ),
                   ),

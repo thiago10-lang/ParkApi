@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import '../../services/session.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/common.dart';
@@ -38,6 +39,34 @@ class _UsuariosTabState extends State<UsuariosTab> {
       if (mounted) setState(() => _erro = e.message);
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _alterarPerfil(Map<String, dynamic> usuario, String role) async {
+    final destino = role == 'ADMIN' ? 'administrador' : 'cliente';
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Alterar perfil'),
+        content: Text('Tornar ${usuario['username']} $destino? A mudança vale a partir do próximo login dessa pessoa.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      ApiService.check(await ApiService.patch('/usuarios/${usuario['id']}/perfil', {'role': role}));
+      if (!mounted) return;
+      showMessage(context, '${usuario['username']} agora é $destino.');
+      _carregar();
+    } on ApiException catch (e) {
+      if (mounted) showMessage(context, e.message, error: true);
     }
   }
 
@@ -84,9 +113,26 @@ class _UsuariosTabState extends State<UsuariosTab> {
                       ),
                       title: Text(u['username'] ?? ''),
                       subtitle: Text('ID ${u['id']}'),
-                      trailing: admin
-                          ? const StatusChip(label: 'Administrador', color: AppColors.primary, background: AppColors.primarySoft)
-                          : const StatusChip(label: 'Cliente', color: AppColors.textMuted, background: AppColors.inputFill),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          admin
+                              ? const StatusChip(label: 'Administrador', color: AppColors.primary, background: AppColors.primarySoft)
+                              : const StatusChip(label: 'Cliente', color: AppColors.textMuted, background: AppColors.inputFill),
+                          if (u['username'] != Session.username)
+                            PopupMenuButton<String>(
+                              tooltip: 'Alterar perfil',
+                              onSelected: (role) => _alterarPerfil(u, role),
+                              itemBuilder: (_) => [
+                                admin
+                                    ? const PopupMenuItem(value: 'CLIENTE', child: Text('Tornar cliente'))
+                                    : const PopupMenuItem(value: 'ADMIN', child: Text('Tornar administrador')),
+                              ],
+                            )
+                          else
+                            const SizedBox(width: 48, child: Center(child: Text('Você', style: TextStyle(fontSize: 12, color: AppColors.textMuted)))),
+                        ],
+                      ),
                     );
                   }).toList(),
                 ),

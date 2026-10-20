@@ -4,9 +4,11 @@ import com.mballem.demoparkapi.entity.Usuario;
 import com.mballem.demoparkapi.exception.EntityNotFoundException;
 import com.mballem.demoparkapi.exception.NewPasswordInvalidException;
 import com.mballem.demoparkapi.exception.PasswordInvalidException;
+import com.mballem.demoparkapi.exception.RegraNegocioException;
 import com.mballem.demoparkapi.exception.UsernameUniqueViolationException;
 import com.mballem.demoparkapi.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,5 +69,15 @@ public class UsuarioService {
     @Transactional(readOnly = true)
     public Usuario.Role buscarRolePorUsername(String username) {
         return usuarioRepository.findRoleByUsername(username);
+    }
+
+    @Transactional
+    public Usuario alterarPerfil(Long id, Usuario.Role role, Long solicitanteId) {
+        if (id.equals(solicitanteId)) {
+            throw new RegraNegocioException("Você não pode alterar o seu próprio perfil.", HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+        Usuario usuario = buscarPorId(id);
+        usuario.setRole(role);
+        return usuario;
     }
 }

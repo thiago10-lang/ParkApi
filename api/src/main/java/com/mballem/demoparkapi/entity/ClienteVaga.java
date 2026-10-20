@@ -42,6 +42,9 @@ public class ClienteVaga {
     private BigDecimal valor;
     @Column(name = "desconto", columnDefinition = "decimal(7,2)")
     private BigDecimal desconto;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "forma_pagamento", length = 10)
+    private FormaPagamento formaPagamento;
     @ManyToOne
     @JoinColumn(name = "id_cliente", nullable = false)
     private Cliente cliente;
@@ -61,6 +64,10 @@ public class ClienteVaga {
     @LastModifiedBy
     @Column(name = "modificado_por")
     private String modificadoPor;
+
+    public enum FormaPagamento {
+        PIX, CARTAO, DINHEIRO
+    }
 
     @Override
     public boolean equals(Object o) {

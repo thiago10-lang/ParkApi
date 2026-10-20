@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../models/tarifa.dart';
 import '../../models/ticket.dart';
 import '../../services/api_service.dart';
 import '../../services/session.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/common.dart';
+import '../perfil_screen.dart';
 import 'historico_tab.dart';
 import 'inicio_tab.dart';
 import 'minha_vaga_tab.dart';
@@ -37,6 +39,7 @@ class _ClienteShellState extends State<ClienteShell> {
       _erro = null;
     });
     try {
+      await Tarifa.carregar();
       final disponibilidade = await ApiService.getJson('/vagas/disponibilidade');
       final ativo = await ApiService.getJson('/estacionamentos/ativo');
       if (!mounted) return;
@@ -109,6 +112,11 @@ class _ClienteShellState extends State<ClienteShell> {
         elevation: 0,
         actions: [
           IconButton(tooltip: 'Atualizar', icon: const Icon(Icons.refresh), onPressed: _carregar),
+          IconButton(
+            tooltip: 'Minha conta',
+            icon: const Icon(Icons.account_circle_outlined),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PerfilScreen())),
+          ),
           IconButton(tooltip: 'Sair', icon: const Icon(Icons.logout), onPressed: () => logout(context)),
         ],
       ),

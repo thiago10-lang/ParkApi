@@ -1,5 +1,6 @@
 package com.mballem.demoparkapi.util;
 
+import com.mballem.demoparkapi.entity.Tarifa;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -11,36 +12,27 @@ import java.time.temporal.ChronoUnit;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EstacionamentoUtils {
-    private static final double PRIMEIROS_15_MINUTES = 5.00;
-    private static final double PRIMEIROS_60_MINUTES = 9.25;
-    private static final double ADICIONAL_15_MINUTES = 1.75;
-    private static final double DESCONTO_PERCENTUAL = 0.30;
 
-    public static BigDecimal calcularCusto(LocalDateTime entrada, LocalDateTime saida) {
-        long minutes = entrada.until(saida, ChronoUnit.MINUTES);
-        double total = 0.0;
-
-        if (minutes <= 15) {
-            total = PRIMEIROS_15_MINUTES;
-        } else if (minutes <= 60) {
-            total = PRIMEIROS_60_MINUTES;
+    public static BigDecimal calcularCusto(LocalDateTime entrada, LocalDateTime saida, Tarifa tarifa) {
+        long minutos = entrada.until(saida, ChronoUnit.MINUTES);
+        BigDecimal total;
+        if (minutos <= 15) {
+            total = tarifa.getPrimeiros15Minutos();
+        } else if (minutos <= 60) {
+            total = tarifa.getPrimeiraHora();
         } else {
-            long addicionalMinutes = minutes - 60;
-            Double totalParts = ((double) addicionalMinutes / 15);
-            if (totalParts > totalParts.intValue()) {
-                total += PRIMEIROS_60_MINUTES + (ADICIONAL_15_MINUTES * (totalParts.intValue() + 1));
-            } else {
-                total += PRIMEIROS_60_MINUTES + (ADICIONAL_15_MINUTES * totalParts.intValue());
-            }
+            long adicionais = (minutos - 60 + 14) / 15;
+            total = tarifa.getPrimeiraHora().add(tarifa.getAdicional15Minutos().multiply(BigDecimal.valueOf(adicionais)));
         }
-
-        return new BigDecimal(total).setScale(2, RoundingMode.HALF_EVEN);
+        return total.setScale(2, RoundingMode.HALF_EVEN);
     }
 
-    public static BigDecimal calcularDesconto(BigDecimal custo, long numeroDeVezes) {
-        BigDecimal desconto = ((numeroDeVezes > 0) && (numeroDeVezes % 10 == 0))
-                ? custo.multiply(new BigDecimal(DESCONTO_PERCENTUAL))
-                : new BigDecimal(0);
+    public static BigDecimal calcularDesconto(BigDecimal custo, long numeroDeVezes, Tarifa tarifa) {
+        int usos = tarifa.getUsosParaDesconto();
+        boolean aplica = numeroDeVezes > 0 && usos > 0 && numeroDeVezes % usos == 0;
+        BigDecimal desconto = aplica
+                ? custo.multiply(BigDecimal.valueOf(tarifa.getDescontoPercentual())).divide(BigDecimal.valueOf(100))
+                : BigDecimal.ZERO;
         return desconto.setScale(2, RoundingMode.HALF_EVEN);
     }
 
