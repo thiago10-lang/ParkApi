@@ -282,6 +282,24 @@ public class EstacionamentoController {
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
+    @Operation(summary = "Cancelar solicitação de vaga", description = "Cancela a vaga reservada pelo cliente logado nos primeiros 15 minutos " +
+            "e libera a vaga. Acesso restrito a Role='CLIENTE'", security = @SecurityRequirement(name = "security"),
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Solicitação cancelada"),
+                    @ApiResponse(responseCode = "404", description = "Cliente sem vaga reservada",
+                            content = @Content(mediaType = " application/json;charset=UTF-8",
+                                    schema = @Schema(implementation = ErrorMessage.class))),
+                    @ApiResponse(responseCode = "409", description = "Prazo de cancelamento encerrado",
+                            content = @Content(mediaType = " application/json;charset=UTF-8",
+                                    schema = @Schema(implementation = ErrorMessage.class)))
+            })
+    @DeleteMapping("/ativo")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<Void> cancelarSolicitacao(@AuthenticationPrincipal JwtUserDetails user) {
+        estacionamentoService.cancelarSolicitacao(user.getId());
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "Veículos no pátio", description = "Lista todos os estacionamentos em aberto. Acesso restrito a Role='ADMIN'",
             security = @SecurityRequirement(name = "security"))
     @GetMapping("/ativos")

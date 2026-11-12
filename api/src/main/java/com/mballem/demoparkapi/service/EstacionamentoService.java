@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @RequiredArgsConstructor
@@ -24,6 +25,8 @@ public class EstacionamentoService {
     private final ClienteService clienteService;
     private final VagaService vagaService;
     private final TarifaService tarifaService;
+
+    public static final int MINUTOS_PARA_CANCELAR = 15;
 
     public record Previa(ClienteVaga clienteVaga, LocalDateTime saida, BigDecimal valor, BigDecimal desconto) {
     }
@@ -53,6 +56,20 @@ public class EstacionamentoService {
         clienteVaga.setModelo(dto.getModelo().trim());
         clienteVaga.setCor(dto.getCor().trim());
         return registrarEntrada(clienteVaga, cliente, dto.getVagaCodigo());
+    }
+
+    @Transactional
+    public void cancelarSolicitacao(Long usuarioId) {
+        ClienteVaga clienteVaga = clienteVagaService.buscarAtivoPorUsuarioId(usuarioId).orElseThrow(
+                () -> new RegraNegocioException("Você não possui vaga reservada.", HttpStatus.NOT_FOUND)
+        );
+        long minutos = Duration.between(clienteVaga.getDataEntrada(), LocalDateTime.now()).toMinutes();
+        if (minutos >= MINUTOS_PARA_CANCELAR) {
+            throw new RegraNegocioException("O cancelamento só é permitido nos primeiros 15 minutos. " +
+                    "Procure o atendente para registrar a saída.", HttpStatus.CONFLICT);
+        }
+        clienteVaga.getVaga().setStatus(Vaga.StatusVaga.LIVRE);
+        clienteVagaService.excluir(clienteVaga);
     }
 
     @Transactional

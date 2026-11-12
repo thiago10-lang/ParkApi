@@ -26,6 +26,16 @@ public class ClienteVagaService {
         return repository.save(clienteVaga);
     }
 
+    @Transactional
+    public void excluir(ClienteVaga clienteVaga) {
+        repository.delete(clienteVaga);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean existePorVaga(Long vagaId) {
+        return repository.existsByVagaId(vagaId);
+    }
+
     @Transactional(readOnly = true)
     public ClienteVaga buscarPorRecibo(String recibo) {
         return repository.findByReciboAndDataSaidaIsNull(recibo).orElseThrow(

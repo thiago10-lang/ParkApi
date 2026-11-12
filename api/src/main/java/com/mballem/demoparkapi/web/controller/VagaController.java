@@ -84,6 +84,24 @@ public class VagaController {
         return ResponseEntity.ok(VagaMapper.toDto(vaga));
     }
 
+    @Operation(summary = "Remover uma vaga", description = "Remove uma vaga livre que ainda não tem histórico de estacionamentos. " +
+            "Acesso restrito a Role='ADMIN'", security = @SecurityRequirement(name = "security"),
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Vaga removida"),
+                    @ApiResponse(responseCode = "404", description = "Vaga não localizada",
+                            content = @Content(mediaType = " application/json;charset=UTF-8",
+                                    schema = @Schema(implementation = ErrorMessage.class))),
+                    @ApiResponse(responseCode = "409", description = "Vaga ocupada ou com histórico",
+                            content = @Content(mediaType = " application/json;charset=UTF-8",
+                                    schema = @Schema(implementation = ErrorMessage.class)))
+            })
+    @DeleteMapping("/{codigo}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> delete(@PathVariable String codigo) {
+        vagaService.excluir(codigo);
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "Listar vagas", description = "Lista todas as vagas ordenadas pelo código. Acesso restrito a Role='ADMIN'",
             security = @SecurityRequirement(name = "security"))
     @GetMapping
