@@ -3,6 +3,7 @@ import '../main.dart';
 import '../services/api_service.dart';
 import '../services/session.dart';
 import '../widgets/common.dart';
+import '../widgets/park_logo.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -64,22 +65,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       const SizedBox(height: 40),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.waves, color: primaryBlue, size: 28),
-                          SizedBox(width: 8),
-                          Text(
-                            'ParkAPI',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1E293B),
-                            ),
-                          ),
-                        ],
+                      const ParkLogo(size: 88),
+                      const SizedBox(height: 12),
+                      const ParkNome(fontSize: 26),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Estacionamento inteligente',
+                        style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
                       ),
-                      const SizedBox(height: 48),
+                      const SizedBox(height: 36),
 
                       const Text(
                         'Bem-vindo de volta!',

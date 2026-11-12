@@ -5,6 +5,7 @@ import '../../services/api_service.dart';
 import '../../services/session.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/common.dart';
+import '../../widgets/park_logo.dart';
 import '../perfil_screen.dart';
 import 'historico_tab.dart';
 import 'inicio_tab.dart';
@@ -100,11 +101,18 @@ class _ClienteShellState extends State<ClienteShell> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        titleSpacing: 16,
+        title: Row(
           children: [
-            const Text('Olá, motorista!', style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(Session.username ?? '', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+            const ParkLogo(size: 38),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Olá, motorista!', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(Session.username ?? '', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+              ],
+            ),
           ],
         ),
         backgroundColor: Colors.transparent,

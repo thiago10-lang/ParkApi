@@ -3,6 +3,7 @@ import '../../models/tarifa.dart';
 import '../../services/session.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/common.dart';
+import '../../widgets/park_logo.dart';
 import '../checkin_screen.dart';
 import '../perfil_screen.dart';
 import 'ativos_tab.dart';
@@ -83,9 +84,9 @@ class _AdminShellState extends State<AdminShell> {
         titleSpacing: 20,
         title: Row(
           children: [
-            const Icon(Icons.waves, color: AppColors.primary, size: 26),
-            const SizedBox(width: 8),
-            const Text('ParkAPI', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.text)),
+            const ParkLogo(size: 34),
+            const SizedBox(width: 10),
+            const ParkNome(),
             const SizedBox(width: 10),
             const StatusChip(label: 'Admin', color: AppColors.primary, background: AppColors.primarySoft),
             if (largo) ...[
