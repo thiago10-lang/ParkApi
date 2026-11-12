@@ -61,6 +61,10 @@ class ApiService {
     return _send(() => http.patch(Uri.parse('$baseUrl$endpoint'), headers: _headers(), body: jsonEncode(body)));
   }
 
+  static Future<http.Response> delete(String endpoint) {
+    return _send(() => http.delete(Uri.parse('$baseUrl$endpoint'), headers: _headers()));
+  }
+
   static Future<http.Response> getBytes(String endpoint, {String accept = '*/*'}) {
     return _send(() => http.get(Uri.parse('$baseUrl$endpoint'), headers: {..._headers(), 'Accept': accept}));
   }
@@ -82,6 +86,10 @@ class ApiService {
   static Future<dynamic> postJson(String endpoint, Map<String, dynamic> body) async => check(await post(endpoint, body));
 
   static Future<dynamic> putJson(String endpoint, [Map<String, dynamic>? body]) async => check(await put(endpoint, body));
+
+  static Future<dynamic> patchJson(String endpoint, Map<String, dynamic> body) async => check(await patch(endpoint, body));
+
+  static Future<dynamic> deleteJson(String endpoint) async => check(await delete(endpoint));
 
   static String errorMessage(http.Response response) {
     if (response.statusCode == 401) {

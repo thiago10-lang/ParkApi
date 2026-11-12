@@ -8,6 +8,7 @@ import '../theme/app_colors.dart';
 import '../utils/formatters.dart';
 import '../utils/pix.dart';
 import 'common.dart';
+import '../services/estacionamento_service.dart';
 
 Future<Ticket?> confirmarCheckout(BuildContext context, {required String recibo, required String placa, required String vaga}) async {
   await Tarifa.carregar();
@@ -68,16 +69,15 @@ class _CheckoutDialogState extends State<_CheckoutDialog> {
   bool _enviando = false;
 
   Future<Ticket> _carregarPrevia() async {
-    final data = await ApiService.getJson('/estacionamentos/check-in/${widget.recibo}/previa');
-    return Ticket.fromJson(Map<String, dynamic>.from(data));
+    return EstacionamentoService.previa(widget.recibo);
   }
 
   Future<void> _confirmar() async {
     setState(() => _enviando = true);
     try {
-      final data = await ApiService.putJson('/estacionamentos/check-out/${widget.recibo}?formaPagamento=$_forma');
+      final ticket = await EstacionamentoService.checkout(widget.recibo, _forma);
       if (!mounted) return;
-      Navigator.pop(context, Ticket.fromJson(Map<String, dynamic>.from(data)));
+      Navigator.pop(context, ticket);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _enviando = false);

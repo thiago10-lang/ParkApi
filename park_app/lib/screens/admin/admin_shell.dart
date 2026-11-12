@@ -135,7 +135,7 @@ class _AdminShellState extends State<AdminShell> {
           : NavigationBar(
               selectedIndex: _index,
               onDestinationSelected: _ir,
-              labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
               destinations: _destinos
                   .map((d) => NavigationDestination(icon: Icon(d.$1), selectedIcon: Icon(d.$2), label: d.$3))
                   .toList(),

@@ -5,6 +5,7 @@ import '../../services/api_service.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/common.dart';
+import '../../services/tarifa_service.dart';
 
 class ConfiguracoesTab extends StatefulWidget {
   const ConfiguracoesTab({super.key});
@@ -69,8 +70,7 @@ class _ConfiguracoesTabState extends State<ConfiguracoesTab> {
         nomeRecebedor: _recebedor.text.trim(),
         cidade: _cidade.text.trim(),
       );
-      final response = await ApiService.put('/tarifas', nova.toJson());
-      Tarifa.atual = Tarifa.fromJson(Map<String, dynamic>.from(ApiService.check(response)));
+      Tarifa.atual = await TarifaService.salvar(nova);
       if (mounted) showMessage(context, 'Configurações salvas. Os novos valores já valem para as próximas saídas.');
     } on ApiException catch (e) {
       if (mounted) showMessage(context, e.message, error: true);

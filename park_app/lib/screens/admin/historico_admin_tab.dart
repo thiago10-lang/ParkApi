@@ -7,6 +7,7 @@ import '../../theme/app_colors.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/common.dart';
 import '../../widgets/ticket_card.dart';
+import '../../services/estacionamento_service.dart';
 
 class HistoricoAdminTab extends StatefulWidget {
   const HistoricoAdminTab({super.key});
@@ -57,7 +58,7 @@ class _HistoricoAdminTabState extends State<HistoricoAdminTab> {
     });
     try {
       final filtros = _filtros();
-      final data = await ApiService.getJson('/estacionamentos/todos?page=$_pagina&size=30${filtros.isEmpty ? '' : '&$filtros'}');
+      final data = await EstacionamentoService.historicoGeral(_pagina, filtros);
       if (!mounted) return;
       setState(() {
         _itens.addAll(List<Map<String, dynamic>>.from(data['content'] ?? []).map(Ticket.fromJson));
@@ -91,10 +92,9 @@ class _HistoricoAdminTabState extends State<HistoricoAdminTab> {
     setState(() => _exportando = true);
     try {
       final filtros = _filtros();
-      final response = await ApiService.getBytes('/estacionamentos/exportar${filtros.isEmpty ? '' : '?$filtros'}', accept: 'text/csv');
-      if (response.statusCode != 200) throw ApiException(response.statusCode, ApiService.errorMessage(response));
+      final bytes = await EstacionamentoService.exportarCsv(filtros);
       final nome = 'estacionamentos_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}';
-      await FileSaver.instance.saveFile(name: nome, bytes: response.bodyBytes, fileExtension: 'csv', mimeType: MimeType.csv);
+      await FileSaver.instance.saveFile(name: nome, bytes: bytes, fileExtension: 'csv', mimeType: MimeType.csv);
       if (mounted) showMessage(context, 'Planilha $nome.csv gerada.');
     } on ApiException catch (e) {
       if (mounted) showMessage(context, e.message, error: true);

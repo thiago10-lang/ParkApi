@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'providers/estacionamento_provider.dart';
 import 'screens/admin/admin_shell.dart';
 import 'screens/cliente/cliente_shell.dart';
 import 'screens/boas_vindas_screen.dart';
+import 'services/notificacao_service.dart';
 import 'services/session.dart';
 import 'theme/app_theme.dart';
 
-void main() {
-  runApp(const ParkApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificacaoService.iniciar();
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => EstacionamentoProvider(),
+      child: const ParkApp(),
+    ),
+  );
 }
 
 class ParkApp extends StatelessWidget {

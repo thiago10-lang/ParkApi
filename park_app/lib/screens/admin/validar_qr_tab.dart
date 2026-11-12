@@ -6,6 +6,7 @@ import '../../theme/app_colors.dart';
 import '../../widgets/checkout_dialog.dart';
 import '../../widgets/common.dart';
 import '../../widgets/ticket_card.dart';
+import '../../services/estacionamento_service.dart';
 
 class ValidarQrTab extends StatefulWidget {
   const ValidarQrTab({super.key});
@@ -32,9 +33,9 @@ class _ValidarQrTabState extends State<ValidarQrTab> {
       _cameraAtiva = false;
     });
     try {
-      final data = await ApiService.getJson('/estacionamentos/check-in/$recibo');
+      final ticket = await EstacionamentoService.buscarPorRecibo(recibo);
       if (!mounted) return;
-      setState(() => _ticket = Ticket.fromJson(Map<String, dynamic>.from(data)));
+      setState(() => _ticket = ticket);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _ticket = null);

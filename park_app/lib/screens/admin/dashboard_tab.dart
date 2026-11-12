@@ -5,6 +5,7 @@ import '../../services/api_service.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/common.dart';
+import '../../services/estacionamento_service.dart';
 
 class DashboardTab extends StatefulWidget {
   final void Function(int) onNavegar;
@@ -35,7 +36,7 @@ class _DashboardTabState extends State<DashboardTab> {
 
   Future<void> _carregar() async {
     try {
-      final data = await ApiService.getJson('/dashboard');
+      final data = await EstacionamentoService.dashboard();
       if (mounted) {
         setState(() {
           _data = Map<String, dynamic>.from(data);
@@ -82,7 +83,7 @@ class _DashboardTabState extends State<DashboardTab> {
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: colunas == 2 ? 1.9 : (colunas == 3 ? 2.8 : 3.4),
+            childAspectRatio: colunas == 2 ? 1.45 : (colunas == 3 ? 2.8 : 3.4),
             children: cards,
           ),
           const SizedBox(height: 16),
@@ -224,7 +225,7 @@ class _DashboardTabState extends State<DashboardTab> {
               children: dias.map((e) {
                 final valor = e[chave] as num;
                 final dia = DateTime.parse(e['dia']);
-                final hoje = dia.day == DateTime.now().day;
+                final hoje = dia.day == Fmt.agora().day;
                 final altura = maximo == 0 ? 0.0 : 120 * valor / maximo;
                 return Expanded(
                   child: Padding(

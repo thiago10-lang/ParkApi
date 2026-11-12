@@ -5,6 +5,7 @@ import '../services/session.dart';
 import '../widgets/common.dart';
 import '../widgets/park_logo.dart';
 import 'register_screen.dart';
+import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,11 +30,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
     try {
-      final data = await ApiService.postJson('/auth', {
-        'username': username,
-        'password': password,
-      });
-      await Session.save(data['token']);
+      final token = await AuthService.login(username, password);
+      await Session.save(token);
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,

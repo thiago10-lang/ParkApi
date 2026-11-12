@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -35,31 +36,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await ApiService.post('/usuarios', {
-        'username': email,
-        'password': password,
-      });
-
-      if (!mounted) return;
-
-      if (response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Usuário criado com sucesso! Faça login.')),
-        );
-        Navigator.pop(context);
-      } else if (response.statusCode == 409) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Este e-mail já está cadastrado.')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro (${response.statusCode}): Verifique os dados inseridos.')),
-        );
-      }
-    } catch (e) {
+      await AuthService.cadastrar(email, password);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Falha de conexão com a API. Verifique o servidor.')),
+        const SnackBar(content: Text('Usuário criado com sucesso! Faça login.')),
+      );
+      Navigator.pop(context);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.status == 409 ? 'Este e-mail já está cadastrado.' : e.message)),
       );
     } finally {
       if (mounted) {

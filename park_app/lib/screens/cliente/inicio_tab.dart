@@ -1,40 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/ticket.dart';
+import '../../providers/estacionamento_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/common.dart';
 import '../../widgets/ticket_card.dart';
 
 class InicioTab extends StatelessWidget {
-  final int livres;
-  final int ocupadas;
-  final Ticket? ativo;
-  final bool loading;
-  final String? erro;
   final VoidCallback onSolicitar;
   final VoidCallback onVerTicket;
-  final Future<void> Function() onRefresh;
 
-  const InicioTab({
-    super.key,
-    required this.livres,
-    required this.ocupadas,
-    required this.ativo,
-    required this.loading,
-    required this.erro,
-    required this.onSolicitar,
-    required this.onVerTicket,
-    required this.onRefresh,
-  });
+  const InicioTab({super.key, required this.onSolicitar, required this.onVerTicket});
 
   @override
   Widget build(BuildContext context) {
-    if (erro != null && !loading) {
-      return ErrorState(message: erro!, onRetry: onRefresh);
+    final provider = context.watch<EstacionamentoProvider>();
+    final livres = provider.livres;
+    final ocupadas = provider.ocupadas;
+    final ativo = provider.ativo;
+
+    if (provider.erro != null && !provider.carregando) {
+      return ErrorState(message: provider.erro!, onRetry: provider.carregar);
     }
 
     return RefreshIndicator(
-      onRefresh: onRefresh,
+      onRefresh: provider.carregar,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -44,7 +35,7 @@ class InicioTab extends StatelessWidget {
               color: const Color(0xFF1E3A8A),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: loading && livres + ocupadas == 0
+            child: provider.carregando && livres + ocupadas == 0
                 ? const SizedBox(height: 60, child: Center(child: CircularProgressIndicator(color: Colors.white)))
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -55,7 +46,7 @@ class InicioTab extends StatelessWidget {
                   ),
           ),
           const SizedBox(height: 24),
-          if (ativo != null) _cardAtivo() else _cardSolicitar(),
+          if (ativo != null) _cardAtivo(ativo) else _cardSolicitar(livres),
           const SizedBox(height: 24),
           const SectionTitle('Como funciona'),
           _passo(Icons.edit_note, 'Solicite a vaga', 'Informe seus dados e os do veículo.'),
@@ -77,7 +68,7 @@ class InicioTab extends StatelessWidget {
     );
   }
 
-  Widget _cardSolicitar() {
+  Widget _cardSolicitar(int livres) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: AppColors.card(),
@@ -102,8 +93,7 @@ class InicioTab extends StatelessWidget {
     );
   }
 
-  Widget _cardAtivo() {
-    final ticket = ativo!;
+  Widget _cardAtivo(Ticket ticket) {
     return InkWell(
       onTap: onVerTicket,
       borderRadius: BorderRadius.circular(16),

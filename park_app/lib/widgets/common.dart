@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/estacionamento_provider.dart';
 import '../screens/login_screen.dart';
 import '../services/session.dart';
 import '../theme/app_colors.dart';
@@ -16,6 +18,7 @@ void showMessage(BuildContext context, String message, {bool error = false}) {
 Future<void> logout(BuildContext context) async {
   await Session.clear();
   if (!context.mounted) return;
+  context.read<EstacionamentoProvider>().limpar();
   Navigator.of(context).pushAndRemoveUntil(
     MaterialPageRoute(builder: (_) => const LoginScreen()),
     (_) => false,
@@ -173,7 +176,11 @@ class StatCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textStrong)),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(value, maxLines: 1, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textStrong)),
+                ),
                 Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
                 if (hint != null) Text(hint!, style: const TextStyle(fontSize: 11, color: AppColors.textSoft)),
               ],

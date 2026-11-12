@@ -31,6 +31,11 @@ class Fmt {
     return '***.${cpf.substring(3, 6)}.${cpf.substring(6, 9)}-**';
   }
 
+  static DateTime agora() {
+    final brasilia = DateTime.now().toUtc().subtract(const Duration(hours: 3));
+    return DateTime(brasilia.year, brasilia.month, brasilia.day, brasilia.hour, brasilia.minute, brasilia.second);
+  }
+
   static DateTime? parseData(dynamic valor) {
     if (valor == null) return null;
     return DateTime.tryParse(valor.toString());

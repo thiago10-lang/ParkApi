@@ -1,4 +1,4 @@
-import '../services/api_service.dart';
+import '../services/tarifa_service.dart';
 
 class Tarifa {
   final double primeiros15Minutos;
@@ -67,8 +67,7 @@ class Tarifa {
 
   static Future<Tarifa> carregar() async {
     try {
-      final data = await ApiService.getJson('/tarifas');
-      atual = Tarifa.fromJson(Map<String, dynamic>.from(data));
+      atual = await TarifaService.buscar();
     } catch (_) {}
     return atual;
   }

@@ -43,7 +43,7 @@ class Ticket {
       vagaCodigo: json['vagaCodigo'] ?? '-',
       clienteNome: json['clienteNome'],
       clienteCpf: json['clienteCpf'],
-      dataEntrada: Fmt.parseData(json['dataEntrada']) ?? DateTime.now(),
+      dataEntrada: Fmt.parseData(json['dataEntrada']) ?? Fmt.agora(),
       dataSaida: Fmt.parseData(json['dataSaida']),
       valor: (json['valor'] as num?)?.toDouble(),
       desconto: (json['desconto'] as num?)?.toDouble(),
@@ -55,7 +55,7 @@ class Ticket {
 
   String get veiculo => '$marca $modelo · $cor';
 
-  Duration get permanencia => (dataSaida ?? DateTime.now()).difference(dataEntrada);
+  Duration get permanencia => (dataSaida ?? Fmt.agora()).difference(dataEntrada);
 
   double get valorEstimado => Tarifa.atual.calcularCusto(permanencia.inMinutes);
 

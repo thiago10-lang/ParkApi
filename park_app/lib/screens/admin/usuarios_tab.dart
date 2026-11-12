@@ -4,6 +4,7 @@ import '../../services/session.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/common.dart';
+import '../../services/usuario_service.dart';
 
 class UsuariosTab extends StatefulWidget {
   const UsuariosTab({super.key});
@@ -27,12 +28,12 @@ class _UsuariosTabState extends State<UsuariosTab> {
 
   Future<void> _carregar() async {
     try {
-      final usuarios = await ApiService.getJson('/usuarios');
-      final clientes = await ApiService.getJson('/clientes?size=200&sort=nome,asc');
+      final usuarios = await UsuarioService.listarUsuarios();
+      final clientes = await UsuarioService.listarClientes();
       if (!mounted) return;
       setState(() {
-        _usuarios = List<Map<String, dynamic>>.from(usuarios);
-        _clientes = List<Map<String, dynamic>>.from(clientes['content'] ?? []);
+        _usuarios = usuarios;
+        _clientes = clientes;
         _erro = null;
       });
     } on ApiException catch (e) {
@@ -61,7 +62,7 @@ class _UsuariosTabState extends State<UsuariosTab> {
     );
     if (ok != true) return;
     try {
-      ApiService.check(await ApiService.patch('/usuarios/${usuario['id']}/perfil', {'role': role}));
+      await UsuarioService.alterarPerfil((usuario['id'] as num).toInt(), role);
       if (!mounted) return;
       showMessage(context, '${usuario['username']} agora é $destino.');
       _carregar();

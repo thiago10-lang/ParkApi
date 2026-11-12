@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../models/ticket.dart';
-import '../../services/api_service.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/common.dart';
 import '../relatorio_screen.dart';
 import 'detalhe_ticket_screen.dart';
+import '../../services/estacionamento_service.dart';
 
 class HistoricoTab extends StatefulWidget {
   const HistoricoTab({super.key});
@@ -18,9 +18,7 @@ class _HistoricoTabState extends State<HistoricoTab> {
   late Future<List<Ticket>> _future = _carregar();
 
   Future<List<Ticket>> _carregar() async {
-    final data = await ApiService.getJson('/estacionamentos?size=50&sort=dataEntrada,desc');
-    final content = (data['content'] as List? ?? []);
-    return content.map((e) => Ticket.fromJson(Map<String, dynamic>.from(e))).toList();
+    return EstacionamentoService.historico();
   }
 
   Future<void> _refresh() async {

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../models/ticket.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/common.dart';
 import '../../widgets/park_logo.dart';
+import '../../services/estacionamento_service.dart';
+import '../../services/vaga_service.dart';
+import '../../services/usuario_service.dart';
 
 class SolicitarVagaScreen extends StatefulWidget {
   const SolicitarVagaScreen({super.key});
@@ -39,17 +41,11 @@ class _SolicitarVagaScreenState extends State<SolicitarVagaScreen> {
 
   Future<void> _buscarCliente() async {
     try {
-      final mapa = await ApiService.getJson('/vagas/mapa');
-      _vagas = List<Map<String, dynamic>>.from(mapa);
+      _vagas = await VagaService.mapa();
     } on ApiException catch (_) {
       _vagas = [];
     }
-    try {
-      final data = await ApiService.getJson('/clientes/detalhes');
-      _cliente = Map<String, dynamic>.from(data);
-    } on ApiException catch (_) {
-      _cliente = null;
-    }
+    _cliente = await UsuarioService.clienteLogado();
     if (mounted) setState(() => _carregandoCliente = false);
   }
 
@@ -67,9 +63,9 @@ class _SolicitarVagaScreenState extends State<SolicitarVagaScreen> {
     debugPrint('Solicitação de vaga: $dados');
     setState(() => _enviando = true);
     try {
-      final data = await ApiService.postJson('/estacionamentos/solicitar', dados);
+      final ticket = await EstacionamentoService.solicitar(dados);
       if (!mounted) return;
-      Navigator.pop(context, Ticket.fromJson(Map<String, dynamic>.from(data)));
+      Navigator.pop(context, ticket);
     } on ApiException catch (e) {
       if (mounted) showMessage(context, e.message, error: true);
       if (e.status == 409 && _vagaEscolhida != null) {

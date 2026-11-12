@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../models/tarifa.dart';
+import 'package:provider/provider.dart';
 import '../../models/ticket.dart';
-import '../../services/api_service.dart';
+import '../../providers/estacionamento_provider.dart';
+import '../../services/notificacao_service.dart';
 import '../../services/session.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/common.dart';
@@ -21,82 +22,56 @@ class ClienteShell extends StatefulWidget {
 
 class _ClienteShellState extends State<ClienteShell> {
   int _index = 0;
-  bool _loading = true;
-  String? _erro;
-  Ticket? _ativo;
-  int _livres = 0;
-  int _ocupadas = 0;
-  int _historicoVersao = 0;
+  late final EstacionamentoProvider _provider;
+  bool _saindo = false;
 
   @override
   void initState() {
     super.initState();
-    _carregar();
+    _provider = context.read<EstacionamentoProvider>();
+    _provider.addListener(_verificarSessao);
+    _provider.carregar();
+    _provider.iniciarAtualizacao();
   }
 
-  Future<void> _carregar() async {
-    setState(() {
-      _loading = true;
-      _erro = null;
-    });
-    try {
-      await Tarifa.carregar();
-      final disponibilidade = await ApiService.getJson('/vagas/disponibilidade');
-      final ativo = await ApiService.getJson('/estacionamentos/ativo');
-      if (!mounted) return;
-      final saiu = _ativo != null && ativo == null;
-      setState(() {
-        _livres = (disponibilidade['livres'] as num).toInt();
-        _ocupadas = (disponibilidade['ocupadas'] as num).toInt();
-        _ativo = ativo == null ? null : Ticket.fromJson(Map<String, dynamic>.from(ativo));
-        if (saiu) _historicoVersao++;
-      });
-      if (saiu) showMessage(context, 'Sua saída foi registrada. Obrigado pela visita!');
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      if (e.status == 401) {
-        await logout(context);
-        return;
-      }
-      setState(() => _erro = e.message);
-    } finally {
-      if (mounted) setState(() => _loading = false);
+  @override
+  void dispose() {
+    _provider.removeListener(_verificarSessao);
+    super.dispose();
+  }
+
+  void _verificarSessao() {
+    if (mounted && !_saindo && _provider.sessaoExpirada) {
+      _saindo = true;
+      logout(context);
     }
   }
 
   Future<void> _solicitar() async {
-    if (_ativo != null) {
+    final provider = _provider;
+    if (provider.ativo != null) {
       setState(() => _index = 1);
       return;
     }
+    await NotificacaoService.pedirPermissao();
+    if (!mounted) return;
     final ticket = await Navigator.push<Ticket>(
       context,
       MaterialPageRoute(builder: (_) => const SolicitarVagaScreen()),
     );
     if (ticket == null || !mounted) return;
-    setState(() {
-      _ativo = ticket;
-      _index = 1;
-      _historicoVersao++;
-    });
-    _carregar();
+    provider.registrarSolicitacao(ticket);
+    setState(() => _index = 1);
+    provider.carregar(silencioso: true);
   }
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<EstacionamentoProvider>();
     final tabs = [
-      InicioTab(
-        livres: _livres,
-        ocupadas: _ocupadas,
-        ativo: _ativo,
-        loading: _loading,
-        erro: _erro,
-        onSolicitar: _solicitar,
-        onVerTicket: () => setState(() => _index = 1),
-        onRefresh: _carregar,
-      ),
-      MinhaVagaTab(ativo: _ativo, loading: _loading, onRefresh: _carregar, onSolicitar: _solicitar),
-      HistoricoTab(key: ValueKey(_historicoVersao)),
+      InicioTab(onSolicitar: _solicitar, onVerTicket: () => setState(() => _index = 1)),
+      MinhaVagaTab(onSolicitar: _solicitar),
+      HistoricoTab(key: ValueKey(provider.historicoVersao)),
     ];
 
     return Scaffold(
@@ -119,7 +94,7 @@ class _ClienteShellState extends State<ClienteShell> {
         foregroundColor: Colors.black,
         elevation: 0,
         actions: [
-          IconButton(tooltip: 'Atualizar', icon: const Icon(Icons.refresh), onPressed: _carregar),
+          IconButton(tooltip: 'Atualizar', icon: const Icon(Icons.refresh), onPressed: provider.carregar),
           IconButton(
             tooltip: 'Minha conta',
             icon: const Icon(Icons.account_circle_outlined),
@@ -140,7 +115,7 @@ class _ClienteShellState extends State<ClienteShell> {
         destinations: [
           const NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Início'),
           NavigationDestination(
-            icon: Badge(isLabelVisible: _ativo != null, child: const Icon(Icons.qr_code_2_outlined)),
+            icon: Badge(isLabelVisible: provider.ativo != null, child: const Icon(Icons.qr_code_2_outlined)),
             selectedIcon: const Icon(Icons.qr_code_2),
             label: 'Minha vaga',
           ),

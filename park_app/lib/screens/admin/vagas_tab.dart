@@ -5,6 +5,8 @@ import '../../theme/app_colors.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/checkout_dialog.dart';
 import '../../widgets/common.dart';
+import '../../services/estacionamento_service.dart';
+import '../../services/vaga_service.dart';
 
 class VagasTab extends StatefulWidget {
   const VagasTab({super.key});
@@ -28,14 +30,12 @@ class _VagasTabState extends State<VagasTab> {
 
   Future<void> _carregar() async {
     try {
-      final vagas = await ApiService.getJson('/vagas');
-      final ativos = await ApiService.getJson('/estacionamentos/ativos');
+      final vagas = await VagaService.listar();
+      final ativos = await EstacionamentoService.noPatio();
       if (!mounted) return;
       setState(() {
-        _vagas = List<Map<String, dynamic>>.from(vagas);
-        _ocupacao = {
-          for (final a in List<Map<String, dynamic>>.from(ativos)) a['vagaCodigo'] as String: Ticket.fromJson(a),
-        };
+        _vagas = vagas;
+        _ocupacao = {for (final t in ativos) t.vagaCodigo: t};
         _erro = null;
       });
     } on ApiException catch (e) {
@@ -74,9 +74,60 @@ class _VagasTabState extends State<VagasTab> {
       return;
     }
     try {
-      await ApiService.postJson('/vagas', {'codigo': codigo, 'status': 'LIVRE'});
+      await VagaService.criar(codigo);
       if (!mounted) return;
       showMessage(context, 'Vaga $codigo cadastrada.');
+      _carregar();
+    } on ApiException catch (e) {
+      if (mounted) showMessage(context, e.message, error: true);
+    }
+  }
+
+  void _detalhesVagaLivre(String codigo) {
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      builder: (sheet) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Vaga $codigo', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            const Text('Vaga livre.', style: TextStyle(color: AppColors.textMuted)),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(foregroundColor: AppColors.danger, minimumSize: const Size.fromHeight(50)),
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Remover vaga'),
+              onPressed: () {
+                Navigator.pop(sheet);
+                _removerVaga(codigo);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _removerVaga(String codigo) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Remover a vaga $codigo?'),
+        content: const Text('Só é possível remover vagas livres que ainda não foram usadas.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Remover')),
+        ],
+      ),
+    );
+    if (confirmar != true) return;
+    try {
+      await VagaService.remover(codigo);
+      if (!mounted) return;
+      showMessage(context, 'Vaga $codigo removida.');
       _carregar();
     } on ApiException catch (e) {
       if (mounted) showMessage(context, e.message, error: true);
@@ -86,7 +137,7 @@ class _VagasTabState extends State<VagasTab> {
   void _detalhes(String codigo) {
     final t = _ocupacao[codigo];
     if (t == null) {
-      showMessage(context, 'Vaga $codigo está livre.');
+      _detalhesVagaLivre(codigo);
       return;
     }
     showModalBottomSheet(

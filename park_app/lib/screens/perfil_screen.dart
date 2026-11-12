@@ -3,6 +3,7 @@ import '../services/api_service.dart';
 import '../services/session.dart';
 import '../theme/app_colors.dart';
 import '../widgets/common.dart';
+import '../services/auth_service.dart';
 
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
@@ -20,8 +21,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
   bool _salvando = false;
 
   Future<Map<String, dynamic>> _carregar() async {
-    final data = await ApiService.getJson('/usuarios/me');
-    return Map<String, dynamic>.from(data);
+    return AuthService.meusDados();
   }
 
   String? _validarSenha(String? v) => (v ?? '').length == 6 ? null : 'A senha deve ter exatamente 6 caracteres';
@@ -30,12 +30,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _salvando = true);
     try {
-      final response = await ApiService.patch('/usuarios/$id', {
-        'senhaAtual': _atualController.text,
-        'novaSenha': _novaController.text,
-        'confirmaSenha': _confirmaController.text,
-      });
-      ApiService.check(response);
+      await AuthService.alterarSenha(id, _atualController.text, _novaController.text, _confirmaController.text);
       if (!mounted) return;
       _atualController.clear();
       _novaController.clear();

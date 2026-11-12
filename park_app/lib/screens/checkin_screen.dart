@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../services/api_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/common.dart';
+import '../services/estacionamento_service.dart';
 
 class CheckInScreen extends StatefulWidget {
   const CheckInScreen({super.key});
@@ -22,7 +23,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
   Future<void> _realizarCheckIn() async {
     setState(() => _isLoading = true);
     try {
-      final data = await ApiService.postJson('/estacionamentos/check-in', {
+      final ticket = await EstacionamentoService.checkinManual({
         'placa': _placaController.text.trim().toUpperCase(),
         'marca': _marcaController.text.trim(),
         'modelo': _modeloController.text.trim(),
@@ -30,7 +31,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
         'clienteCpf': _cpfController.text.trim(),
       });
       if (!mounted) return;
-      showMessage(context, 'Check-in realizado na vaga ${data['vagaCodigo']}.');
+      showMessage(context, 'Check-in realizado na vaga ${ticket.vagaCodigo}.');
       Navigator.pop(context, true);
     } on ApiException catch (e) {
       if (mounted) showMessage(context, e.message, error: true);

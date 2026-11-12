@@ -6,6 +6,7 @@ import '../../theme/app_colors.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/checkout_dialog.dart';
 import '../../widgets/common.dart';
+import '../../services/estacionamento_service.dart';
 
 class AtivosTab extends StatefulWidget {
   const AtivosTab({super.key});
@@ -36,10 +37,10 @@ class _AtivosTabState extends State<AtivosTab> {
 
   Future<void> _carregar() async {
     try {
-      final data = await ApiService.getJson('/estacionamentos/ativos');
+      final ativos = await EstacionamentoService.noPatio();
       if (!mounted) return;
       setState(() {
-        _ativos = List<Map<String, dynamic>>.from(data).map(Ticket.fromJson).toList();
+        _ativos = ativos;
         _erro = null;
       });
     } on ApiException catch (e) {
