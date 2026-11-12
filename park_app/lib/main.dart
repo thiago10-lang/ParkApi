@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'screens/admin/admin_shell.dart';
 import 'screens/cliente/cliente_shell.dart';
-import 'screens/login_screen.dart';
+import 'screens/boas_vindas_screen.dart';
 import 'services/session.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(const ParkApp());
@@ -16,10 +17,7 @@ class ParkApp extends StatelessWidget {
     return MaterialApp(
       title: 'ParkAPI',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.indigo,
-        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
-      ),
+      theme: AppTheme.tema,
       home: const SessionGate(),
     );
   }
@@ -45,7 +43,7 @@ class _SessionGateState extends State<SessionGate> {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));
         }
-        return snapshot.data == true ? SessionGate.homeFor() : const LoginScreen();
+        return snapshot.data == true ? SessionGate.homeFor() : const BoasVindasScreen();
       },
     );
   }

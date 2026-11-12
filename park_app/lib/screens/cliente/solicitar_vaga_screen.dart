@@ -5,6 +5,7 @@ import '../../services/api_service.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/common.dart';
+import '../../widgets/park_logo.dart';
 
 class SolicitarVagaScreen extends StatefulWidget {
   const SolicitarVagaScreen({super.key});
@@ -54,17 +55,19 @@ class _SolicitarVagaScreenState extends State<SolicitarVagaScreen> {
 
   Future<void> _enviar() async {
     if (!_formKey.currentState!.validate()) return;
+    final dados = {
+      if (_cliente == null) 'nome': _nomeController.text.trim(),
+      if (_cliente == null) 'cpf': _cpfController.text.trim(),
+      'placa': _placaController.text.trim().toUpperCase(),
+      'marca': _marcaController.text.trim(),
+      'modelo': _modeloController.text.trim(),
+      'cor': _corController.text.trim(),
+      if (_vagaEscolhida != null) 'vagaCodigo': _vagaEscolhida,
+    };
+    debugPrint('Solicitação de vaga: $dados');
     setState(() => _enviando = true);
     try {
-      final data = await ApiService.postJson('/estacionamentos/solicitar', {
-        if (_cliente == null) 'nome': _nomeController.text.trim(),
-        if (_cliente == null) 'cpf': _cpfController.text.trim(),
-        'placa': _placaController.text.trim().toUpperCase(),
-        'marca': _marcaController.text.trim(),
-        'modelo': _modeloController.text.trim(),
-        'cor': _corController.text.trim(),
-        if (_vagaEscolhida != null) 'vagaCodigo': _vagaEscolhida,
-      });
+      final data = await ApiService.postJson('/estacionamentos/solicitar', dados);
       if (!mounted) return;
       Navigator.pop(context, Ticket.fromJson(Map<String, dynamic>.from(data)));
     } on ApiException catch (e) {
@@ -160,6 +163,14 @@ class _SolicitarVagaScreenState extends State<SolicitarVagaScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: AppColors.textStrong,
+        titleSpacing: 0,
+        title: const Row(
+          children: [
+            ParkLogo(size: 30),
+            SizedBox(width: 10),
+            ParkNome(fontSize: 18),
+          ],
+        ),
       ),
       body: _carregandoCliente
           ? const Center(child: CircularProgressIndicator())

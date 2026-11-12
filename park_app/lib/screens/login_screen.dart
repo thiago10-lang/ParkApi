@@ -35,9 +35,10 @@ class _LoginScreenState extends State<LoginScreen> {
       });
       await Session.save(data['token']);
       if (!mounted) return;
-      Navigator.pushReplacement(
+      Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => SessionGate.homeFor()),
+        (route) => false,
       );
     } on ApiException catch (e) {
       if (!mounted) return;

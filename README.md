@@ -94,14 +94,43 @@ ParkApi/
 │   │   ├── screens/cliente/     telas do motorista
 │   │   ├── screens/admin/       painel administrativo
 │   │   ├── services/            API e sessão
-│   │   ├── theme/               cores e estilos
+│   │   ├── screens/             boas-vindas, login, cadastro e telas comuns
+│   │   ├── services/            API e sessão
+│   │   ├── theme/               cores e ThemeData do app
+│   │   ├── utils/               formatação e Pix
 │   │   └── widgets/             componentes reutilizáveis
+│   ├── assets/logo.png          logo exibido no app
 │   └── pubspec.yaml
 ├── scripts/                     build do aplicativo na Vercel
 ├── vercel.json                  deploy do aplicativo web
 ├── render.yaml                  deploy da API
 └── README.md
 ```
+
+---
+
+## 📱 Projeto Bimestral 1 (BRADEMO)
+
+### Recursos Flutter
+
+| Requisito | Onde está no app |
+| --- | --- |
+| RC1 Estrutura de pastas | `park_app/lib` separado em `models/`, `screens/`, `widgets/`, `services/`, `theme/`, `utils/` e `assets/logo.png`, como no exercício 3 da Aula 3 |
+| RC2 Rotas e Navegação | `Navigator.push` com `MaterialPageRoute` e `Navigator.pop` (boas-vindas → login/cadastro, histórico → detalhes, início → solicitar vaga, minha conta, relatório) |
+| RC3 Passagem de dados | Ida: `DetalheTicketScreen(ticket: ...)` recebe o ticket pelo construtor. Volta: `SolicitarVagaScreen` devolve o `Ticket` criado com `Navigator.pop(context, ticket)` e o check-in manual devolve `true` |
+| RC4 Formulário | `Form` com `GlobalKey<FormState>`, `TextFormField` e `validator` em `solicitar_vaga_screen.dart` (também em `perfil_screen.dart` e `configuracoes_tab.dart`) |
+| RC5 Responsividade | `MediaQuery.of(context).orientation` em `boas_vindas_screen.dart` (coluna em retrato, linha em paisagem), `MediaQuery` em `admin_shell.dart` (menu lateral ou inferior) e `LayoutBuilder` no `dashboard_tab.dart` |
+| RC6 ThemeData | `theme/app_theme.dart`, usado no `MaterialApp` do `main.dart` |
+| RC7 Widgets Material | `AppBar` em todas as telas, `NavigationBar` inferior no motorista e no admin, `FloatingActionButton` em `vagas_tab.dart` |
+
+### Telas
+
+| Tela | Arquivo |
+| --- | --- |
+| 1 Boas-vindas | `screens/boas_vindas_screen.dart`: AppBar, logo, textos e botões Entrar / Criar conta |
+| 2 Lista de itens | `screens/cliente/historico_tab.dart`: `ListView` com os estacionamentos do motorista |
+| 3 Formulário | `screens/cliente/solicitar_vaga_screen.dart`: campos com validação e botão de envio. Os dados digitados aparecem no console (`debugPrint`) |
+| 4 Detalhes | `screens/cliente/detalhe_ticket_screen.dart`: aberto ao tocar em um item do histórico |
 
 ---
 

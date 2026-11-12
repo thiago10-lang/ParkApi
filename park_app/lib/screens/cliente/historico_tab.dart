@@ -4,8 +4,8 @@ import '../../services/api_service.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/common.dart';
-import '../../widgets/ticket_card.dart';
 import '../relatorio_screen.dart';
+import 'detalhe_ticket_screen.dart';
 
 class HistoricoTab extends StatefulWidget {
   const HistoricoTab({super.key});
@@ -29,14 +29,9 @@ class _HistoricoTabState extends State<HistoricoTab> {
   }
 
   void _detalhes(Ticket ticket) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: SingleChildScrollView(child: TicketCard(ticket: ticket, showQr: ticket.ativo)),
-      ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => DetalheTicketScreen(ticket: ticket)),
     );
   }
 

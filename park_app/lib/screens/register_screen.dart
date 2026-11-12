@@ -31,6 +31,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    debugPrint('Cadastro de usuário: e-mail $email');
     setState(() => _isLoading = true);
 
     try {
