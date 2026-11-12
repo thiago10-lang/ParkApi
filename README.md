@@ -91,11 +91,11 @@ ParkApi/
 ├── park_app/                    aplicativo Flutter
 │   ├── lib/
 │   │   ├── models/              ticket e cálculo de valores
+│   │   ├── providers/           estado compartilhado (Provider)
+│   │   ├── screens/             boas-vindas, login, cadastro e telas comuns
 │   │   ├── screens/cliente/     telas do motorista
 │   │   ├── screens/admin/       painel administrativo
-│   │   ├── services/            API e sessão
-│   │   ├── screens/             boas-vindas, login, cadastro e telas comuns
-│   │   ├── services/            API e sessão
+│   │   ├── services/            camada de acesso à API, sessão e notificações
 │   │   ├── theme/               cores e ThemeData do app
 │   │   ├── utils/               formatação e Pix
 │   │   └── widgets/             componentes reutilizáveis
@@ -131,6 +131,40 @@ ParkApi/
 | 2 Lista de itens | `screens/cliente/historico_tab.dart`: `ListView` com os estacionamentos do motorista |
 | 3 Formulário | `screens/cliente/solicitar_vaga_screen.dart`: campos com validação e botão de envio. Os dados digitados aparecem no console (`debugPrint`) |
 | 4 Detalhes | `screens/cliente/detalhe_ticket_screen.dart`: aberto ao tocar em um item do histórico |
+
+## 📲 Projeto Bimestral 2 (BRADEMO)
+
+O documento de projeto (tema, requisitos, casos de uso, protótipos com fluxo de navegação e DER) está em [`docs/projeto/Documento-de-Projeto-ParkAPI.pdf`](docs/projeto/Documento-de-Projeto-ParkAPI.pdf).
+
+### Requisitos funcionais
+
+Cadastro (RF-A) e login (RF-B) são obrigatórios e não entram na contagem.
+
+| RF | Requisito | API | Tela |
+| --- | --- | --- | --- |
+| RF01 | Consultar vagas e preços | `GET /vagas/disponibilidade`, `GET /tarifas` | Início |
+| RF02 | Solicitar vaga (com mapa) | `POST /estacionamentos/solicitar` | Solicitar vaga |
+| RF03 | Ver ticket com QR Code | `GET /estacionamentos/ativo` | Minha vaga |
+| RF04 | Cancelar solicitação (até 15 min) | `DELETE /estacionamentos/ativo` | Minha vaga |
+| RF05 | Histórico, detalhes e relatório PDF | `GET /estacionamentos`, `GET /estacionamentos/relatorio` | Histórico |
+| RF06 | Receber notificações | `GET /estacionamentos/ativo` a cada 30 s | Notificação |
+| RF07 | Alterar senha | `PATCH /usuarios/{id}` | Minha conta |
+| RF08 | Dashboard | `GET /dashboard` | Dashboard |
+| RF09 | Gerenciar vagas (criar e remover) | `POST /vagas`, `DELETE /vagas/{codigo}` | Vagas |
+| RF10 | Saída e pagamento lendo o QR pela câmera | `PUT /estacionamentos/check-out/{recibo}` | Ler QR |
+| RF11 | Histórico geral e exportação CSV | `GET /estacionamentos/todos`, `/exportar` | Histórico |
+| RF12 | Tarifas e Pix | `PUT /tarifas` | Configurações |
+| RF13 | Perfis de usuários | `PATCH /usuarios/{id}/perfil` | Usuários |
+| RF14 | Check-in manual | `POST /estacionamentos/check-in` | Check-in manual |
+
+### Recursos nativos e arquitetura
+
+| Critério | Onde está |
+| --- | --- |
+| Camada que encapsula a API Web | `lib/services/api_service.dart` (HTTP, token e erros) + `auth_service.dart`, `estacionamento_service.dart`, `vaga_service.dart`, `usuario_service.dart`, `tarifa_service.dart`. As telas não fazem HTTP direto |
+| Push notification | `lib/services/notificacao_service.dart` com `flutter_local_notifications`: vaga reservada, solicitação cancelada e saída registrada. Permissão `POST_NOTIFICATIONS` no `AndroidManifest.xml` |
+| Recurso extra | Câmera para ler o QR Code do ticket (`mobile_scanner`) na aba Ler QR do administrador |
+| Provider | `lib/providers/estacionamento_provider.dart` registrado no `main.dart` com `ChangeNotifierProvider` e lido nas abas do motorista com `context.watch` |
 
 ---
 
