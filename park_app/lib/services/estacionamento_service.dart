@@ -40,6 +40,19 @@ class EstacionamentoService {
     return response.bodyBytes;
   }
 
+  static Future<Uint8List> relatorioPdf() async {
+    final response = await ApiService.getBytes('/estacionamentos/relatorio', accept: 'application/pdf');
+    if (response.statusCode == 401) throw Exception('Sua sessão expirou. Entre novamente para ver o relatório.');
+    if (response.statusCode == 403) throw Exception('Este relatório está disponível apenas para contas de cliente.');
+    if (response.statusCode == 404) throw Exception('Você ainda não possui estacionamentos para gerar o relatório.');
+    if (response.statusCode != 200) throw Exception('Não foi possível gerar o relatório (${response.statusCode}).');
+    final bytes = response.bodyBytes;
+    if (bytes.length < 5 || String.fromCharCodes(bytes.sublist(0, 5)) != '%PDF-') {
+      throw Exception('A API não retornou um PDF válido.');
+    }
+    return bytes;
+  }
+
   static Future<Ticket> buscarPorRecibo(String recibo) async {
     return _ticket(await ApiService.getJson('/estacionamentos/check-in/$recibo'));
   }

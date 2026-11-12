@@ -112,38 +112,4 @@ class ApiService {
     } catch (_) {}
     return 'Erro inesperado (${response.statusCode}).';
   }
-
-  static Future<Uint8List> getRelatorioPdf() async {
-    final token = Session.token;
-    if (token == null || token.isEmpty) {
-      throw Exception('Sua sessão expirou. Entre novamente para ver o relatório.');
-    }
-
-    final response = await http.get(
-      Uri.parse('$baseUrl/estacionamentos/relatorio'),
-      headers: {
-        'Accept': 'application/pdf',
-        'Authorization': 'Bearer $token',
-      },
-    ).timeout(const Duration(seconds: 30));
-
-    if (response.statusCode == 401) {
-      throw Exception('Sua sessão expirou. Entre novamente para ver o relatório.');
-    }
-    if (response.statusCode == 403) {
-      throw Exception('Este relatório está disponível apenas para contas de cliente.');
-    }
-    if (response.statusCode == 404) {
-      throw Exception('Você ainda não possui estacionamentos para gerar o relatório.');
-    }
-    if (response.statusCode != 200) {
-      throw Exception('Não foi possível gerar o relatório (${response.statusCode}).');
-    }
-    final bytes = response.bodyBytes;
-    if (bytes.length < 5 || bytes[0] != 0x25 || bytes[1] != 0x50 ||
-        bytes[2] != 0x44 || bytes[3] != 0x46 || bytes[4] != 0x2D) {
-      throw Exception('A API não retornou um PDF válido.');
-    }
-    return bytes;
-  }
 }

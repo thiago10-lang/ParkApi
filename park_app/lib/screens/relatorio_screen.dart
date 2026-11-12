@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 
-import '../services/api_service.dart';
+import '../services/estacionamento_service.dart';
 
 class RelatorioScreen extends StatefulWidget {
   const RelatorioScreen({super.key});
@@ -19,11 +19,11 @@ class _RelatorioScreenState extends State<RelatorioScreen> {
   @override
   void initState() {
     super.initState();
-    _pdfFuture = ApiService.getRelatorioPdf();
+    _pdfFuture = EstacionamentoService.relatorioPdf();
   }
 
   void _tentarNovamente() {
-    setState(() => _pdfFuture = ApiService.getRelatorioPdf());
+    setState(() => _pdfFuture = EstacionamentoService.relatorioPdf());
   }
 
   @override
