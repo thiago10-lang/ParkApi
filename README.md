@@ -166,6 +166,27 @@ Cadastro (RF-A) e login (RF-B) são obrigatórios e não entram na contagem.
 | Recurso extra | Câmera para ler o QR Code do ticket (`mobile_scanner`) na aba Ler QR do administrador |
 | Provider | `lib/providers/estacionamento_provider.dart` registrado no `main.dart` com `ChangeNotifierProvider` e lido nas abas do motorista com `context.watch` |
 
+## 🌐 Projeto Back-end (BRADWBK)
+
+O documento de especificação (domínio, requisitos, WebSocket, entidades, tabela REST e testes) está em [`docs/api/Especificacao-API-ParkAPI.pdf`](docs/api/Especificacao-API-ParkAPI.pdf).
+
+| Critério | Onde está |
+| --- | --- |
+| CRUD da entidade 1: Vaga | `POST/GET/PUT/DELETE /api/v1/vagas` |
+| CRUD da entidade 2: Recurso | `POST/GET/PUT/DELETE /api/v1/recursos` |
+| CRUD da entidade 3: Cliente | `POST/GET/PUT/DELETE /api/v1/clientes` |
+| CRUD da entidade 4: Estacionamento | `POST /estacionamentos/solicitar`, `GET /estacionamentos/check-in/{recibo}`, `PUT /estacionamentos/check-in/{recibo}`, `DELETE /estacionamentos/{recibo}` |
+| Um-para-muitos | Cliente 1:N Estacionamento (`@OneToMany` / `@ManyToOne`) e Vaga 1:N Estacionamento |
+| Muitos-para-muitos | Vaga N:N Recurso (`@ManyToMany` + `@JoinTable vagas_tem_recursos`) |
+| WebSocket | `ws://localhost:8080/ws/vagas` e o painel cliente em http://localhost:8080/painel/index.html |
+| Testes funcionais | Coleção Postman em `docs/api/ParkAPI.postman_collection.json` (ambientes local e Render) e evidências em `docs/api/evidencias/` |
+
+Para rodar os testes pela linha de comando com a API ligada:
+
+```bash
+npx newman run docs/api/ParkAPI.postman_collection.json -e docs/api/ParkAPI-local.postman_environment.json
+```
+
 ---
 
 ## 🔧 Como rodar em qualquer máquina
