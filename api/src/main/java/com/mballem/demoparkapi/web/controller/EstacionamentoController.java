@@ -10,6 +10,7 @@ import com.mballem.demoparkapi.service.JasperService;
 import com.mballem.demoparkapi.util.CsvExporter;
 import com.mballem.demoparkapi.web.dto.EstacionamentoCreateDto;
 import com.mballem.demoparkapi.web.dto.EstacionamentoResponseDto;
+import com.mballem.demoparkapi.web.dto.VeiculoUpdateDto;
 import com.mballem.demoparkapi.web.dto.PageableDto;
 import com.mballem.demoparkapi.web.dto.SolicitacaoVagaDto;
 import com.mballem.demoparkapi.web.dto.mapper.ClienteVagaMapper;
@@ -297,6 +298,39 @@ public class EstacionamentoController {
     @PreAuthorize("hasRole('CLIENTE')")
     public ResponseEntity<Void> cancelarSolicitacao(@AuthenticationPrincipal JwtUserDetails user) {
         estacionamentoService.cancelarSolicitacao(user.getId());
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Atualizar dados do veículo", description = "Corrige placa, marca, modelo e cor de um estacionamento em aberto. Acesso restrito a Role='ADMIN'",
+            security = @SecurityRequirement(name = "security"),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Estacionamento atualizado",
+                            content = @Content(mediaType = " application/json;charset=UTF-8", schema = @Schema(implementation = EstacionamentoResponseDto.class))),
+                    @ApiResponse(responseCode = "404", description = "Recibo não encontrado ou já finalizado",
+                            content = @Content(mediaType = " application/json;charset=UTF-8", schema = @Schema(implementation = ErrorMessage.class))),
+                    @ApiResponse(responseCode = "409", description = "Placa já possui estacionamento em aberto",
+                            content = @Content(mediaType = " application/json;charset=UTF-8", schema = @Schema(implementation = ErrorMessage.class))),
+                    @ApiResponse(responseCode = "422", description = "Dados inválidos",
+                            content = @Content(mediaType = " application/json;charset=UTF-8", schema = @Schema(implementation = ErrorMessage.class)))
+            })
+    @PutMapping("/check-in/{recibo}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<EstacionamentoResponseDto> atualizarVeiculo(@PathVariable String recibo, @RequestBody @Valid VeiculoUpdateDto dto) {
+        ClienteVaga clienteVaga = estacionamentoService.atualizarVeiculo(recibo, dto.getPlaca(), dto.getMarca(), dto.getModelo(), dto.getCor());
+        return ResponseEntity.ok(ClienteVagaMapper.toDto(clienteVaga));
+    }
+
+    @Operation(summary = "Remover estacionamento em aberto", description = "Exclui um registro em aberto lançado por engano e libera a vaga. Acesso restrito a Role='ADMIN'",
+            security = @SecurityRequirement(name = "security"),
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Registro removido"),
+                    @ApiResponse(responseCode = "404", description = "Recibo não encontrado ou já finalizado",
+                            content = @Content(mediaType = " application/json;charset=UTF-8", schema = @Schema(implementation = ErrorMessage.class)))
+            })
+    @DeleteMapping("/{recibo}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> excluir(@PathVariable String recibo) {
+        estacionamentoService.excluirEmAberto(recibo);
         return ResponseEntity.noContent().build();
     }
 

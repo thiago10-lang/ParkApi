@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ParkAPI - Painel de vagas em tempo real</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; font-family: 'Poppins', sans-serif; background: #F8FAFC; color: #0F172A; }
+  header { background: #1E3A8A; color: white; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  header h1 { margin: 0; font-size: 20px; font-weight: 600; }
+  .status { font-size: 14px; display: flex; align-items: center; gap: 8px; }
+  .bolinha { width: 10px; height: 10px; border-radius: 50%; background: #DC2626; }
+  .bolinha.on { background: #16A34A; }
+  main { max-width: 1000px; margin: 0 auto; padding: 20px 16px; }
+  .botoes { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  button { font-family: inherit; font-size: 14px; padding: 8px 16px; border-radius: 8px; border: 1px solid #1D4ED8; background: white; color: #1D4ED8; cursor: pointer; }
+  button.principal { background: #1D4ED8; color: white; }
+  button:disabled { opacity: .5; cursor: default; }
+  .contadores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+  .contador { background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; text-align: center; }
+  .contador b { display: block; font-size: 28px; }
+  .contador span { color: #64748B; font-size: 13px; }
+  h2 { font-size: 16px; font-weight: 600; margin: 0 0 10px; }
+  .mapa { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; margin-bottom: 24px; }
+  .vaga { border-radius: 10px; padding: 14px 6px; text-align: center; font-weight: 600; border: 2px solid; transition: background .4s; }
+  .vaga small { display: block; font-weight: 400; font-size: 12px; }
+  .LIVRE { border-color: #16A34A; background: #DCFCE7; color: #166534; }
+  .OCUPADA { border-color: #DC2626; background: #FEE2E2; color: #991B1B; }
+  .destaque { box-shadow: 0 0 0 4px #FDE68A; }
+  .log { background: white; border: 1px solid #E2E8F0; border-radius: 12px; max-height: 300px; overflow-y: auto; }
+  .log div { padding: 8px 12px; border-bottom: 1px solid #F1F5F9; font-size: 13px; }
+  .log .tipo { font-weight: 600; color: #1D4ED8; margin-right: 6px; }
+  .log .hora { color: #94A3B8; margin-right: 6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ParkAPI · Painel de vagas em tempo real</h1>
+  <div class="status"><span id="bolinha" class="bolinha"></span><span id="status">Desconectado</span></div>
+</header>
+<main>
+  <div class="botoes">
+    <button id="conectar" class="principal" onclick="conectar()">Conectar</button>
+    <button id="desconectar" onclick="desconectar()" disabled>Desconectar</button>
+    <button id="atualizar" onclick="pedirAtualizacao()" disabled>Pedir atualização</button>
+  </div>
+  <div class="contadores">
+    <div class="contador"><b id="total">-</b><span>vagas</span></div>
+    <div class="contador"><b id="livres">-</b><span>livres</span></div>
+    <div class="contador"><b id="ocupadas">-</b><span>ocupadas</span></div>
+  </div>
+  <h2>Mapa de vagas</h2>
+  <div id="mapa" class="mapa"></div>
+  <h2>Eventos recebidos pelo WebSocket</h2>
+  <div id="log" class="log"></div>
+</main>
+<script>
+  let socket = null;
+  let situacaoAnterior = {};
+
+  function enderecoWebSocket() {
+    const protocolo = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return protocolo + '//' + location.host + '/ws/vagas';
+  }
+
+  function conectar() {
+    socket = new WebSocket(enderecoWebSocket());
+    socket.onopen = () => alterarStatus(true);
+    socket.onclose = () => alterarStatus(false);
+    socket.onerror = () => registrar({ tipo: 'ERRO', mensagem: 'Falha na conexão com o servidor.', hora: '' });
+    socket.onmessage = (evento) => {
+      const dados = JSON.parse(evento.data);
+      registrar(dados);
+      if (dados.vagas) desenharMapa(dados);
+    };
+  }
+
+  function desconectar() {
+    if (socket) socket.close();
+  }
+
+  function pedirAtualizacao() {
+    if (socket && socket.readyState === WebSocket.OPEN) socket.send('atualizar');
+  }
+
+  function alterarStatus(conectado) {
+    document.getElementById('bolinha').className = conectado ? 'bolinha on' : 'bolinha';
+    document.getElementById('status').textContent = conectado ? 'Conectado' : 'Desconectado';
+    document.getElementById('conectar').disabled = conectado;
+    document.getElementById('desconectar').disabled = !conectado;
+    document.getElementById('atualizar').disabled = !conectado;
+  }
+
+  function desenharMapa(dados) {
+    document.getElementById('total').textContent = dados.total;
+    document.getElementById('livres').textContent = dados.livres;
+    document.getElementById('ocupadas').textContent = dados.ocupadas;
+    const mapa = document.getElementById('mapa');
+    mapa.innerHTML = '';
+    dados.vagas.forEach((vaga) => {
+      const div = document.createElement('div');
+      div.className = 'vaga ' + vaga.status;
+      if (situacaoAnterior[vaga.codigo] && situacaoAnterior[vaga.codigo] !== vaga.status) {
+        div.classList.add('destaque');
+      }
+      div.innerHTML = vaga.codigo + '<small>' + (vaga.status === 'LIVRE' ? 'Livre' : 'Ocupada') + '</small>';
+      mapa.appendChild(div);
+      situacaoAnterior[vaga.codigo] = vaga.status;
+    });
+  }
+
+  function registrar(dados) {
+    const log = document.getElementById('log');
+    const linha = document.createElement('div');
+    linha.innerHTML = '<span class="hora">' + (dados.hora || '') + '</span><span class="tipo">' + dados.tipo + '</span>' + dados.mensagem;
+    log.prepend(linha);
+  }
+
+  conectar();
+</script>
+</body>
+</html>

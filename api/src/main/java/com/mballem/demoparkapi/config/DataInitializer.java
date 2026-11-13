@@ -2,11 +2,13 @@ package com.mballem.demoparkapi.config;
 
 import com.mballem.demoparkapi.entity.Cliente;
 import com.mballem.demoparkapi.entity.ClienteVaga;
+import com.mballem.demoparkapi.entity.Recurso;
 import com.mballem.demoparkapi.entity.Tarifa;
 import com.mballem.demoparkapi.entity.Usuario;
 import com.mballem.demoparkapi.entity.Vaga;
 import com.mballem.demoparkapi.repository.ClienteRepository;
 import com.mballem.demoparkapi.repository.ClienteVagaRepository;
+import com.mballem.demoparkapi.repository.RecursoRepository;
 import com.mballem.demoparkapi.repository.UsuarioRepository;
 import com.mballem.demoparkapi.repository.VagaRepository;
 import com.mballem.demoparkapi.service.TarifaService;
@@ -55,6 +57,7 @@ public class DataInitializer implements CommandLineRunner {
     private static final DateTimeFormatter RECIBO = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
 
     private final VagaRepository vagaRepository;
+    private final RecursoRepository recursoRepository;
     private final UsuarioRepository usuarioRepository;
     private final ClienteRepository clienteRepository;
     private final ClienteVagaRepository clienteVagaRepository;
@@ -75,6 +78,12 @@ public class DataInitializer implements CommandLineRunner {
                 vagaRepository.save(vaga);
             }
         }
+        if (recursoRepository.count() == 0) {
+            criarRecurso("Coberta", "Vaga protegida do sol e da chuva", "A-01", "A-02", "A-03", "B-01", "B-02");
+            criarRecurso("PCD", "Vaga reservada para pessoa com deficiência", "A-01", "B-01");
+            criarRecurso("Idoso", "Vaga preferencial para idosos", "A-02", "B-02");
+            criarRecurso("Carregador elétrico", "Ponto de recarga para carro elétrico", "B-05", "B-06");
+        }
         criarUsuario("admin@park.com", Usuario.Role.ROLE_ADMIN);
         criarUsuario("cliente@park.com", Usuario.Role.ROLE_CLIENTE);
         Tarifa tarifa = tarifaService.obter();
@@ -83,6 +92,16 @@ public class DataInitializer implements CommandLineRunner {
             gerarMovimentacao(tarifa);
         }
         log.info("Dados iniciais prontos: {} vagas, admin@park.com e cliente@park.com com senha 123456", vagaRepository.count());
+    }
+
+    private void criarRecurso(String nome, String descricao, String... codigosVagas) {
+        Recurso recurso = new Recurso();
+        recurso.setNome(nome);
+        recurso.setDescricao(descricao);
+        recursoRepository.save(recurso);
+        for (String codigo : codigosVagas) {
+            vagaRepository.findByCodigo(codigo).ifPresent(vaga -> vaga.getRecursos().add(recurso));
+        }
     }
 
     private Usuario criarUsuario(String username, Usuario.Role role) {

@@ -117,4 +117,13 @@ public class UsuarioController {
         Usuario usuario = usuarioService.alterarPerfil(id, Usuario.Role.valueOf("ROLE_" + dto.getRole()), userDetails.getId());
         return ResponseEntity.ok(UsuarioMapper.toDto(usuario));
     }
+
+    @Operation(summary = "Remover um usuário", description = "Remove o usuário e o cliente ligado a ele quando não há estacionamentos. " +
+            "Não permite remover a própria conta. Acesso restrito a ADMIN", security = @SecurityRequirement(name = "security"))
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> delete(@PathVariable Long id, @AuthenticationPrincipal JwtUserDetails userDetails) {
+        usuarioService.excluir(id, userDetails.getId());
+        return ResponseEntity.noContent().build();
+    }
 }

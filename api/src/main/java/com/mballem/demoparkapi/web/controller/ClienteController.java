@@ -7,6 +7,7 @@ import com.mballem.demoparkapi.service.ClienteService;
 import com.mballem.demoparkapi.service.UsuarioService;
 import com.mballem.demoparkapi.web.dto.ClienteCreateDto;
 import com.mballem.demoparkapi.web.dto.ClienteResponseDto;
+import com.mballem.demoparkapi.web.dto.ClienteUpdateDto;
 import com.mballem.demoparkapi.web.dto.PageableDto;
 import com.mballem.demoparkapi.web.dto.mapper.ClienteMapper;
 import com.mballem.demoparkapi.web.dto.mapper.PageableMapper;
@@ -114,6 +115,39 @@ public class ClienteController {
                                               @PageableDefault(size = 5, sort = {"nome"}) Pageable pageable) {
         Page<ClienteProjection> clientes = clienteService.buscarTodos(pageable);
         return ResponseEntity.ok(PageableMapper.toDto(clientes));
+    }
+
+    @Operation(summary = "Atualizar cliente", description = "Altera o nome do cliente. Acesso restrito a Role='ADMIN'",
+            security = @SecurityRequirement(name = "security"),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Cliente atualizado",
+                            content = @Content(mediaType = " application/json;charset=UTF-8", schema = @Schema(implementation = ClienteResponseDto.class))),
+                    @ApiResponse(responseCode = "404", description = "Cliente não encontrado",
+                            content = @Content(mediaType = " application/json;charset=UTF-8", schema = @Schema(implementation = ErrorMessage.class))),
+                    @ApiResponse(responseCode = "422", description = "Dados inválidos",
+                            content = @Content(mediaType = " application/json;charset=UTF-8", schema = @Schema(implementation = ErrorMessage.class)))
+            })
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ClienteResponseDto> update(@PathVariable Long id, @RequestBody @Valid ClienteUpdateDto dto) {
+        Cliente cliente = clienteService.atualizar(id, dto.getNome());
+        return ResponseEntity.ok(ClienteMapper.toDto(cliente));
+    }
+
+    @Operation(summary = "Remover cliente", description = "Remove um cliente sem estacionamentos registrados (relacionamento um-para-muitos). Acesso restrito a Role='ADMIN'",
+            security = @SecurityRequirement(name = "security"),
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Cliente removido"),
+                    @ApiResponse(responseCode = "404", description = "Cliente não encontrado",
+                            content = @Content(mediaType = " application/json;charset=UTF-8", schema = @Schema(implementation = ErrorMessage.class))),
+                    @ApiResponse(responseCode = "409", description = "Cliente possui estacionamentos",
+                            content = @Content(mediaType = " application/json;charset=UTF-8", schema = @Schema(implementation = ErrorMessage.class)))
+            })
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        clienteService.excluir(id);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Recuperar dados do cliente autenticado",

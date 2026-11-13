@@ -37,6 +37,10 @@ public class EstacionamentoUtils {
     }
 
     public static String gerarRecibo() {
-        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+        return gerarRecibo(LocalDateTime.now());
+    }
+
+    public static String gerarRecibo(LocalDateTime dataHora) {
+        return dataHora.format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
     }
 }

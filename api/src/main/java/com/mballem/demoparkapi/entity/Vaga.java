@@ -13,7 +13,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 @Entity
@@ -28,6 +30,11 @@ public class Vaga implements Serializable {
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
     private StatusVaga status;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "vagas_tem_recursos",
+            joinColumns = @JoinColumn(name = "id_vaga"),
+            inverseJoinColumns = @JoinColumn(name = "id_recurso"))
+    private Set<Recurso> recursos = new HashSet<>();
     @CreatedDate
     @Column(name = "data_criacao")
     private LocalDateTime dataCriacao;

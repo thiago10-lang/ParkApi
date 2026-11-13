@@ -13,6 +13,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
@@ -31,6 +33,8 @@ public class Cliente implements Serializable {
     @OneToOne
     @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;
+    @OneToMany(mappedBy = "cliente")
+    private List<ClienteVaga> estacionamentos = new ArrayList<>();
 
     @CreatedDate
     @Column(name = "data_criacao")

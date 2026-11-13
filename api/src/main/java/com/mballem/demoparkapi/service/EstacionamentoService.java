@@ -8,7 +8,9 @@ import com.mballem.demoparkapi.exception.RegraNegocioException;
 import com.mballem.demoparkapi.exception.SolicitacaoVagaException;
 import com.mballem.demoparkapi.util.EstacionamentoUtils;
 import com.mballem.demoparkapi.web.dto.SolicitacaoVagaDto;
+import com.mballem.demoparkapi.websocket.PainelEvento;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,7 @@ public class EstacionamentoService {
     private final ClienteService clienteService;
     private final VagaService vagaService;
     private final TarifaService tarifaService;
+    private final ApplicationEventPublisher eventos;
 
     public static final int MINUTOS_PARA_CANCELAR = 15;
 
@@ -70,6 +73,33 @@ public class EstacionamentoService {
         }
         clienteVaga.getVaga().setStatus(Vaga.StatusVaga.LIVRE);
         clienteVagaService.excluir(clienteVaga);
+        eventos.publishEvent(new PainelEvento("SOLICITACAO_CANCELADA",
+                "Solicitação da vaga " + clienteVaga.getVaga().getCodigo() + " cancelada pelo motorista."));
+    }
+
+    @Transactional
+    public ClienteVaga atualizarVeiculo(String recibo, String placa, String marca, String modelo, String cor) {
+        ClienteVaga clienteVaga = clienteVagaService.buscarPorRecibo(recibo);
+        String novaPlaca = placa.trim().toUpperCase();
+        if (!clienteVaga.getPlaca().equals(novaPlaca) && clienteVagaService.existeAtivoPorPlaca(novaPlaca)) {
+            throw new RegraNegocioException("A placa " + novaPlaca + " já possui estacionamento em aberto.", HttpStatus.CONFLICT);
+        }
+        clienteVaga.setPlaca(novaPlaca);
+        clienteVaga.setMarca(marca.trim());
+        clienteVaga.setModelo(modelo.trim());
+        clienteVaga.setCor(cor.trim());
+        eventos.publishEvent(new PainelEvento("VEICULO_ATUALIZADO",
+                "Dados do veículo da vaga " + clienteVaga.getVaga().getCodigo() + " atualizados (" + novaPlaca + ")."));
+        return clienteVaga;
+    }
+
+    @Transactional
+    public void excluirEmAberto(String recibo) {
+        ClienteVaga clienteVaga = clienteVagaService.buscarPorRecibo(recibo);
+        clienteVaga.getVaga().setStatus(Vaga.StatusVaga.LIVRE);
+        clienteVagaService.excluir(clienteVaga);
+        eventos.publishEvent(new PainelEvento("ESTACIONAMENTO_REMOVIDO",
+                "Registro " + recibo + " removido e vaga " + clienteVaga.getVaga().getCodigo() + " liberada."));
     }
 
     @Transactional
@@ -94,7 +124,10 @@ public class EstacionamentoService {
         clienteVaga.setFormaPagamento(formaPagamento);
         clienteVaga.getVaga().setStatus(Vaga.StatusVaga.LIVRE);
 
-        return clienteVagaService.salvar(clienteVaga);
+        ClienteVaga salvo = clienteVagaService.salvar(clienteVaga);
+        eventos.publishEvent(new PainelEvento("SAIDA",
+                "Saída do veículo " + salvo.getPlaca() + " na vaga " + salvo.getVaga().getCodigo() + "."));
+        return salvo;
     }
 
     private ClienteVaga registrarEntrada(ClienteVaga clienteVaga, Cliente cliente, String codigoVaga) {
@@ -104,11 +137,17 @@ public class EstacionamentoService {
         vaga.setStatus(Vaga.StatusVaga.OCUPADA);
         clienteVaga.setVaga(vaga);
 
-        clienteVaga.setDataEntrada(LocalDateTime.now());
+        LocalDateTime entrada = LocalDateTime.now().withNano(0);
+        while (clienteVagaService.existeRecibo(EstacionamentoUtils.gerarRecibo(entrada))) {
+            entrada = entrada.plusSeconds(1);
+        }
+        clienteVaga.setDataEntrada(entrada);
+        clienteVaga.setRecibo(EstacionamentoUtils.gerarRecibo(entrada));
 
-        clienteVaga.setRecibo(EstacionamentoUtils.gerarRecibo());
-
-        return clienteVagaService.salvar(clienteVaga);
+        ClienteVaga salvo = clienteVagaService.salvar(clienteVaga);
+        eventos.publishEvent(new PainelEvento("ENTRADA",
+                "Entrada do veículo " + salvo.getPlaca() + " na vaga " + vaga.getCodigo() + "."));
+        return salvo;
     }
 
     private Vaga escolherVaga(String codigoVaga) {

@@ -5,6 +5,7 @@ import com.mballem.demoparkapi.service.VagaService;
 import com.mballem.demoparkapi.web.dto.DisponibilidadeDto;
 import com.mballem.demoparkapi.web.dto.VagaCreateDto;
 import com.mballem.demoparkapi.web.dto.VagaResponseDto;
+import com.mballem.demoparkapi.web.dto.VagaUpdateDto;
 import com.mballem.demoparkapi.web.dto.mapper.VagaMapper;
 import com.mballem.demoparkapi.web.exception.ErrorMessage;
 import io.swagger.v3.oas.annotations.Operation;
@@ -81,6 +82,25 @@ public class VagaController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<VagaResponseDto> getByCodigo(@PathVariable String codigo) {
         Vaga vaga = vagaService.buscarPorCodigo(codigo);
+        return ResponseEntity.ok(VagaMapper.toDto(vaga));
+    }
+
+    @Operation(summary = "Atualizar uma vaga", description = "Altera o código da vaga e os recursos associados (muitos-para-muitos). Acesso restrito a Role='ADMIN'",
+            security = @SecurityRequirement(name = "security"),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Vaga atualizada",
+                            content = @Content(mediaType = " application/json;charset=UTF-8", schema = @Schema(implementation = VagaResponseDto.class))),
+                    @ApiResponse(responseCode = "404", description = "Vaga ou recurso não encontrado",
+                            content = @Content(mediaType = " application/json;charset=UTF-8", schema = @Schema(implementation = ErrorMessage.class))),
+                    @ApiResponse(responseCode = "409", description = "Código já cadastrado",
+                            content = @Content(mediaType = " application/json;charset=UTF-8", schema = @Schema(implementation = ErrorMessage.class))),
+                    @ApiResponse(responseCode = "422", description = "Dados inválidos",
+                            content = @Content(mediaType = " application/json;charset=UTF-8", schema = @Schema(implementation = ErrorMessage.class)))
+            })
+    @PutMapping("/{codigo}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<VagaResponseDto> update(@PathVariable String codigo, @RequestBody @Valid VagaUpdateDto dto) {
+        Vaga vaga = vagaService.atualizar(codigo, dto.getCodigo(), dto.getRecursoIds());
         return ResponseEntity.ok(VagaMapper.toDto(vaga));
     }
 

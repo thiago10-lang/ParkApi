@@ -3,6 +3,7 @@ package com.mballem.demoparkapi.service;
 import com.mballem.demoparkapi.entity.Cliente;
 import com.mballem.demoparkapi.exception.CpfUniqueViolationException;
 import com.mballem.demoparkapi.exception.EntityNotFoundException;
+import com.mballem.demoparkapi.exception.RegraNegocioException;
 import com.mballem.demoparkapi.exception.SolicitacaoVagaException;
 import com.mballem.demoparkapi.repository.ClienteRepository;
 import com.mballem.demoparkapi.repository.projection.ClienteProjection;
@@ -23,6 +24,9 @@ public class ClienteService {
 
     @Transactional
     public Cliente salvar(Cliente cliente) {
+        if (cliente.getUsuario() != null && clienteRepository.findByUsuarioId(cliente.getUsuario().getId()) != null) {
+            throw new RegraNegocioException("Este usuário já possui cadastro de cliente.", HttpStatus.CONFLICT);
+        }
         try {
             return clienteRepository.save(cliente);
         } catch (DataIntegrityViolationException ex) {
@@ -35,6 +39,23 @@ public class ClienteService {
         return clienteRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Cliente", String.valueOf(id))
         );
+    }
+
+    @Transactional
+    public Cliente atualizar(Long id, String nome) {
+        Cliente cliente = buscarPorId(id);
+        cliente.setNome(nome.trim());
+        return cliente;
+    }
+
+    @Transactional
+    public void excluir(Long id) {
+        Cliente cliente = buscarPorId(id);
+        if (!cliente.getEstacionamentos().isEmpty()) {
+            throw new RegraNegocioException("O cliente possui " + cliente.getEstacionamentos().size()
+                    + " estacionamento(s) registrado(s) e não pode ser removido.", HttpStatus.CONFLICT);
+        }
+        clienteRepository.delete(cliente);
     }
 
     @Transactional(readOnly = true)

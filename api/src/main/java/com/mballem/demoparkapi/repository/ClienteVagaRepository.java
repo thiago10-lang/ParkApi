@@ -31,6 +31,8 @@ public interface ClienteVagaRepository extends JpaRepository<ClienteVaga, Long> 
 
     boolean existsByVagaId(Long vagaId);
 
+    boolean existsByRecibo(String recibo);
+
     List<ClienteVagaProjection> findAllByDataSaidaIsNullOrderByDataEntradaDesc();
 
     List<ClienteVagaProjection> findTop8ByOrderByDataModificacaoDesc();

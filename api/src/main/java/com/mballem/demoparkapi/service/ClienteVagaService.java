@@ -2,11 +2,14 @@ package com.mballem.demoparkapi.service;
 
 import com.mballem.demoparkapi.entity.ClienteVaga;
 import com.mballem.demoparkapi.exception.ReciboCheckInNotFoundException;
+import com.mballem.demoparkapi.exception.RegraNegocioException;
 import com.mballem.demoparkapi.repository.ClienteVagaRepository;
 import com.mballem.demoparkapi.repository.projection.ClienteVagaProjection;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,12 +26,21 @@ public class ClienteVagaService {
 
     @Transactional
     public ClienteVaga salvar(ClienteVaga clienteVaga) {
-        return repository.save(clienteVaga);
+        try {
+            return repository.saveAndFlush(clienteVaga);
+        } catch (DataIntegrityViolationException ex) {
+            throw new RegraNegocioException("Outro registro foi feito no mesmo instante. Tente novamente.", HttpStatus.CONFLICT);
+        }
     }
 
     @Transactional
     public void excluir(ClienteVaga clienteVaga) {
         repository.delete(clienteVaga);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean existeRecibo(String recibo) {
+        return repository.existsByRecibo(recibo);
     }
 
     @Transactional(readOnly = true)

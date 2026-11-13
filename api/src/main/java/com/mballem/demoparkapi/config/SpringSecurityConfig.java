@@ -45,7 +45,9 @@ public class SpringSecurityConfig {
                                 antMatcher("/docs-park/**"),
                                 antMatcher("/swagger-ui.html"),
                                 antMatcher("/swagger-ui/**"),
-                                antMatcher("/webjars/**")
+                                antMatcher("/webjars/**"),
+                                antMatcher("/ws/**"),
+                                antMatcher("/painel/**")
                         ).permitAll()
                         .anyRequest().authenticated()
                 ).sessionManagement(
